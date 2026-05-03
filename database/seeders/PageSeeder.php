@@ -3,242 +3,515 @@
 namespace Database\Seeders;
 
 use App\Models\Page;
+use App\Models\SiteSetting;
+use App\Support\PageLocales;
 use Illuminate\Database\Seeder;
 
 class PageSeeder extends Seeder
 {
     public function run(): void
     {
+        $siteName = SiteSetting::get('site_name', 'Community Care Foundation');
+        $siteDescription = SiteSetting::get(
+            'site_description',
+            'Community-led non-profit supporting education, health, and relief programs.'
+        );
+        $siteLogoUrl = asset(SiteSetting::siteLogoPath());
+        $currentMaxSortOrder = Page::max('sort_order') ?? 0;
+        Page::where('slug', 'impact-areas')->delete();
+        $targetSlugs = [
+            'home',
+            'platform',
+            'about-us',
+            'product',
+            'history',
+            'jobs-announcement',
+            'annual-report',
+            'strategic-plan',
+            'partner',
+            'volunteer',
+            'image',
+            'video',
+            'contact',
+            'donate',
+        ];
+
+        // Move the existing seeded pages out of the way first so the predefined
+        // sort orders can be restored without hitting the unique index.
+        $temporarySortOrder = $currentMaxSortOrder + 1000;
+        foreach ($targetSlugs as $slug) {
+            $existing = Page::where('slug', $slug)->first();
+            if ($existing) {
+                $existing->update(['sort_order' => $temporarySortOrder++]);
+            }
+        }
+
         $pages = [
             [
-                'title' => 'Home Page', 
-                'slug' => 'home', 
-                'page_category' => 'main',
-                'icon' => 'home',
-                'content' => [
-                    'hero' => [
-                        'title' => 'Empowering Communities',
-                        'subtitle' => 'for a Better Future',
-                        'description' => 'Bandos Komar is a local NGO dedicated to improving education in Cambodia, especially in rural areas. We believe every child deserves a chance to learn and grow.',
-                        'badge' => 'Impact since 1989',
-                        'image' => '/assets/images/hero.png',
-                    ],
-                    'stats' => [
-                        'heading' => 'Who We Are',
-                        'title' => 'Bandos Komar Association',
-                        'description' => 'Bandos Komar (BK) is a local NGO dedicated to improving education in Cambodia, especially in rural areas. The organization originated from Partage, which began operating in Cambodia in November 1989.',
-                        'items' => [
-                            ['label' => 'Founded', 'value' => '1989'],
-                            ['label' => 'Years Impact', 'value' => '30+'],
-                            ['label' => 'Communities', 'value' => '100+'],
-                            ['label' => 'Children Helped', 'value' => '10k+'],
-                        ]
-                    ],
-                    'cta' => [
-                        'title' => 'Support Our Mission',
-                        'description' => 'Your contribution can make a real difference in the lives of children in rural Cambodia. Join us in our journey to empower the next generation.',
-                    ],
-                    'programs' => [
-                        ['title' => 'Early Childhood Care', 'description' => 'Ensuring children aged 0-5 have access to quality care and early education.', 'icon' => 'book-open'],
-                        ['title' => 'Primary Education', 'description' => 'Supporting local schools to improve the quality of teaching and learning.', 'icon' => 'graduation-cap'],
-                        ['title' => 'Community Empowerment', 'description' => 'Working with parents and local authorities to build strong support systems.', 'icon' => 'users'],
-                        ['title' => 'WASH & Health', 'description' => 'Providing clean water, sanitation, and hygiene facilities for better health.', 'icon' => 'droplets'],
-                    ]
-                ]
-            ],
-            [
-                'title' => 'About Us', 
-                'slug' => 'about-us', 
-                'page_category' => 'main',
-                'icon' => 'info',
-                'content' => [
-                    'header' => [
-                        'badge' => 'About Us',
-                        'title' => 'Our Mission & Vision',
-                        'description' => 'At Bandos Komar, we believe every child has the potential to change the world through education and community support.',
-                    ],
-                    'mission' => [
-                        'title' => 'Transforming Education in Rural Cambodia',
-                        'description' => 'Bandos Komar (BK) is a local NGO dedicated to improving education in Cambodia, especially in rural areas. The organization originated from Partage, which began operating in Cambodia in November 1989.',
-                        'quote' => 'Education is the most powerful weapon which you can use to change the world.',
-                        'image' => 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=2070&auto=format&fit=crop'
-                    ],
-                    'values' => [
-                        'title' => 'Our Core Values',
-                        'items' => [
-                            ['title' => 'Integrity', 'description' => 'We maintain the highest standards of transparency and accountability.', 'icon' => 'shield-check'],
-                            ['title' => 'Empowerment', 'description' => 'We believe in enabling communities to take charge of their own development.', 'icon' => 'hand-metal'],
-                            ['title' => 'Inclusion', 'description' => 'We strive to ensure that every child has equal access to quality education.', 'icon' => 'heart'],
-                        ]
-                    ]
-                ]
-            ],
-            [
-                'title' => 'History', 
-                'slug' => 'history', 
-                'page_category' => 'main',
-                'icon' => 'history',
-                'content' => [
-                    'header' => [
-                        'title' => 'Our Journey Since 1989',
-                        'description' => 'A legacy of commitment to Cambodian children and rural development.',
-                    ],
-                    'timeline' => [
-                        ['year' => '1989', 'title' => 'Foundation', 'description' => 'Partage begins operating in Cambodia to support local education.'],
-                        ['year' => '2000', 'title' => 'Expansion', 'description' => 'BK expands its programs to include community empowerment.'],
-                        ['year' => '2020', 'title' => 'Modernization', 'description' => 'Implementing digital education and WASH programs across Cambodia.'],
-                    ]
-                ]
-            ],
-            [
-                'title' => 'Our Program', 
-                'slug' => 'our-program', 
-                'page_category' => 'main',
-                'icon' => 'graduation-cap',
-                'content' => [
-                    'header' => [
-                        'title' => 'Impactful Programs',
-                        'description' => 'We deliver comprehensive solutions for education and health.',
-                    ]
-                ]
-            ],
-            [
-                'title' => 'Annual Report', 
-                'slug' => 'annual-report', 
-                'page_category' => 'resources',
-                'icon' => 'file-text',
-                'content' => [
-                    'header' => [
-                        'title' => 'Annual Reports',
-                        'description' => 'Transparent documentation of our annual impact and financial health.',
-                    ],
-                    'reports' => [
-                        ['title' => 'Annual Report 2023', 'year' => '2023', 'link' => '#'],
-                        ['title' => 'Annual Report 2022', 'year' => '2022', 'link' => '#'],
-                    ]
-                ]
-            ],
-            [
-                'title' => 'Publication', 
-                'slug' => 'publication', 
-                'page_category' => 'resources',
-                'icon' => 'book-open',
-                'content' => [
-                    'header' => [
-                        'title' => 'Publications',
-                        'description' => 'Research papers, case studies, and informational materials.',
-                    ],
-                    'items' => [
-                        ['title' => 'Education Study 2023', 'type' => 'PDF', 'link' => '#'],
-                    ]
-                ]
-            ],
-            [
-                'title' => 'Photo Gallery',
-                'slug' => 'photo-gallery',
-                'page_category' => 'resources',
-                'icon' => 'image',
-                'content' => [
-                    'header' => [
-                        'title' => 'Photo Gallery',
-                        'description' => 'Photos from our programs, communities, and field activities.',
-                    ],
+                'slug' => 'home',
+                'title' => 'Home',
+                'content' => 'Building stronger communities together.',
+                'route_name' => 'frontend.home',
+                'meta_title' => $siteName . ' | Building stronger communities together',
+                'meta_description' => $siteDescription,
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Building stronger communities together',
+                    'og_description' => $siteDescription,
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
                 ],
-            ],
-            [
-                'title' => 'Video Center',
-                'slug' => 'video-center',
-                'page_category' => 'resources',
-                'icon' => 'video',
-                'content' => [
-                    'header' => [
-                        'title' => 'Video Center',
-                        'description' => 'Videos highlighting our work, stories, and community impact.',
-                    ],
+                'canonical_url' => route('frontend.home'),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'Organization',
+                    'name' => $siteName,
+                    'url' => route('frontend.home'),
+                    'description' => $siteDescription,
+                    'logo' => $siteLogoUrl,
                 ],
+                'sort_order' => 1,
+                'page_content' => $this->localizedContent([
+                    'hero_headline' => 'Building stronger communities together.',
+                    'hero_description' => 'We are a non-profit organization dedicated to education, health, and community support. Together with volunteers and donors, we turn compassion into action.',
+                    'hero_image' => '',
+                    'company_title' => 'Our Mission',
+                    'company_description' => 'We mobilize people, resources, and partnerships to create practical support for communities that need it most.',
+                    'company_logo' => '',
+                    'value_prop_1_title' => 'Education',
+                    'value_prop_1_desc' => 'Scholarships, tutoring, school supplies, and learning spaces that help children and young people thrive.',
+                    'value_prop_2_title' => 'Health & Care',
+                    'value_prop_2_desc' => 'Community health outreach, wellness education, and compassionate care for families.',
+                    'value_prop_3_title' => 'Emergency Relief',
+                    'value_prop_3_desc' => 'Fast response support for families facing crisis, displacement, or urgent hardship.',
+                    'capabilities_image' => '',
+                    'marketing_title' => 'Get involved',
+                    'marketing_description' => 'Donate, volunteer, or partner with us to help expand our impact across more communities.',
+                    'marketing_image' => '',
+                    'mobile_title' => 'Impact in action',
+                    'mobile_image' => '',
+                    'mobile_bg' => '',
+                    'style_title' => 'Featured programs',
+                    'color_choice_title' => 'Program areas',
+                    'styles' => [],
+                    'partners_title' => 'Our supporters',
+                    'partner_images' => [],
+                ]),
             ],
             [
-                'title' => 'Support Us',
-                'slug' => 'support-us',
-                'page_category' => 'get-involved',
-                'icon' => 'heart-handshake',
-                'content' => [
-                    'header' => [
-                        'title' => 'Support Us',
-                        'description' => 'Learn how your support can help children and communities thrive.',
-                    ],
+                'slug' => 'platform',
+                'title' => 'Our Mission',
+                'content' => 'We work alongside communities to deliver education, care, and relief with dignity.',
+                'route_name' => 'frontend.platform',
+                'meta_title' => $siteName . ' | Our Mission',
+                'meta_description' => 'Learn how our mission centers on education, health, relief, and local partnership.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Our Mission',
+                    'og_description' => 'Learn how our mission centers on education, health, relief, and local partnership.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
                 ],
-            ],
-            [
-                'title' => 'Sponsor a Child',
-                'slug' => 'sponsor-child',
-                'page_category' => 'get-involved',
-                'icon' => 'user-plus',
-                'content' => [
-                    'header' => [
-                        'title' => 'Sponsor a Child',
-                        'description' => 'Help a child access education, care, and brighter opportunities.',
-                    ],
+                'canonical_url' => route('frontend.platform'),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Our Mission',
+                    'url' => route('frontend.platform'),
+                    'description' => 'We work alongside communities to deliver education, care, and relief with dignity.',
                 ],
-            ],
-            [
-                'title' => 'Ways to Give',
-                'slug' => 'ways-to-give',
-                'page_category' => 'get-involved',
-                'icon' => 'gift',
-                'content' => [
-                    'header' => [
-                        'title' => 'Ways to Give',
-                        'description' => 'Explore donation, partnership, and other support options.',
+                'sort_order' => 2,
+                'page_content' => $this->localizedContent([
+                    'profile_title' => 'Our Mission',
+                    'profile_tagline' => 'We work alongside communities to deliver education, care, and relief with dignity.',
+                    'platform_slider_images' => [],
+                    'platform_image' => '',
+                    'features_title' => 'What we do',
+                    'features_subtitle' => 'We invest in practical programs that address real needs, not short-term optics.',
+                    'features' => [
+                        ['title' => 'Education support for children and youth.', 'color' => 'blue', 'icon' => 'icon_3'],
+                        ['title' => 'Health outreach and family care.', 'color' => 'green', 'icon' => 'icon_11'],
+                        ['title' => 'Emergency relief when crisis hits.', 'color' => 'red', 'icon' => 'icon_5'],
+                        ['title' => 'Community partnerships with local leaders.', 'color' => 'purple', 'icon' => 'icon_7'],
+                        ['title' => 'Transparent reporting for donors.', 'color' => 'blue', 'icon' => 'icon_2'],
+                        ['title' => 'Volunteer coordination and training.', 'color' => 'green', 'icon' => 'icon_8'],
                     ],
-                ],
+                    'choose_title' => 'Why support our work?',
+                    'choose_col_1_text' => 'Supported by local partners',
+                    'choose_col_1_image' => '',
+                    'choose_col_2_text' => 'Community focus',
+                    'choose_col_2_value' => '24/7',
+                    'choose_col_3_text' => 'Program areas',
+                    'choose_col_3_value' => '3+',
+                ]),
             ],
             [
-                'title' => 'Career',
-                'slug' => 'career',
-                'page_category' => 'get-involved',
-                'icon' => 'briefcase',
-                'content' => [
-                    'header' => [
-                        'title' => 'Career',
-                        'description' => 'Find opportunities to work and volunteer with Bandos Komar.',
+                'slug' => 'about-us',
+                'title' => 'About Us',
+                'content' => 'We are a non-profit team focused on education, care, and relief.',
+                'route_name' => 'frontend.about-us',
+                'meta_title' => $siteName . ' | About Us',
+                'meta_description' => 'Discover who we are, how we work, and why our approach is community-led.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | About Us',
+                    'og_description' => 'Discover who we are, how we work, and why our approach is community-led.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.about-us'),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'About Us',
+                    'url' => route('frontend.about-us'),
+                    'description' => 'We are a non-profit team focused on education, care, and relief.',
+                ],
+                'sort_order' => 3,
+                'page_content' => $this->localizedContent([
+                    'results_subtitle' => 'Community impact',
+                    'results_title' => 'How do we deliver meaningful results?',
+                    'results_description' => 'We build practical, transparent programs that focus on long-term support for people and communities.',
+                    'different_subtitle' => 'Why we are different',
+                    'different_title' => 'We work with people, not for them.',
+                    'different_description' => 'Our approach is collaborative, local, and rooted in dignity. We listen first and act with care.',
+                    'different_check' => 'Community-led support',
+                    'different_image' => '',
+                    'promise_subtitle' => 'Our promise',
+                    'promise_title' => 'We stay accountable to every family and donor.',
+                    'promise_description' => 'We keep our work simple, transparent, and focused on the real needs that matter most.',
+                    'promise_check' => 'Transparent reporting',
+                    'promise_image' => '',
+                    'solutions_subtitle' => 'Our approach',
+                    'solutions_title' => 'Programs designed for lasting change',
+                    'solutions_description' => 'Each initiative is shaped to respond to community needs with practical support and local partnership.',
+                    'solution_cards' => [
+                        ['title' => 'Education support', 'description' => 'Scholarships, school supplies, and learning support for children and youth.', 'icon' => 'sol_1'],
+                        ['title' => 'Health outreach', 'description' => 'Health education, basic care, and referrals that make support easier to access.', 'icon' => 'sol_2'],
+                        ['title' => 'Emergency relief', 'description' => 'Rapid help for families facing crisis, displacement, or urgent hardship.', 'icon' => 'sol_3'],
                     ],
-                ],
+                    'interests_title' => 'Where support matters most',
+                    'interest_cards' => [
+                        ['title' => 'Meals and essentials', 'description' => 'Helping families access the things they need most, when they need them most.', 'icon' => 'int_1'],
+                        ['title' => 'Youth mentoring', 'description' => 'Guidance, encouragement, and opportunities for young people to grow.', 'icon' => 'int_2'],
+                        ['title' => 'Reports and transparency', 'description' => 'Clear reporting so supporters can see how the work is making a difference.', 'icon' => 'int_3'],
+                        ['title' => 'Community partnerships', 'description' => 'Working side by side with local organizations to make support stronger.', 'icon' => 'int_4'],
+                        ['title' => 'Volunteer care', 'description' => 'Equipping volunteers with simple, effective ways to help.', 'icon' => 'int_5'],
+                        ['title' => 'Ongoing support', 'description' => 'Stay connected through regular updates, needs, and opportunities to serve.', 'icon' => 'int_6'],
+                    ],
+                    'ready_title' => 'Ready to help build stronger communities?',
+                ]),
             ],
             [
-                'title' => 'Donate',
+                'slug' => 'product',
+                'title' => 'Our Programs',
+                'content' => 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.',
+                'route_name' => 'frontend.product',
+                'meta_title' => $siteName . ' | Our Programs',
+                'meta_description' => 'Explore the programs and community support initiatives we currently offer.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Our Programs',
+                    'og_description' => 'Explore the programs and community support initiatives we currently offer.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.product'),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'CollectionPage',
+                    'name' => 'Our Programs',
+                    'url' => route('frontend.product'),
+                    'description' => 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.',
+                ],
+                'sort_order' => 4,
+                'page_content' => $this->localizedContent([
+                    'description' => 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.',
+                    'products_title' => 'Our Programs',
+                    'partners_title' => 'Our supporters',
+                    'partner_images' => [],
+                ]),
+            ],
+            [
+                'slug' => 'history',
+                'title' => 'History',
+                'content' => 'Our history is rooted in local service, long-term partnerships, and practical support for families.',
+                'route_name' => 'frontend.history',
+                'meta_title' => $siteName . ' | History',
+                'meta_description' => 'Read how our organization grew through community-led service and shared action.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | History',
+                    'og_description' => 'Read how our organization grew through community-led service and shared action.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.history'),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'History',
+                    'url' => route('frontend.history'),
+                    'description' => 'Our history is rooted in local service, long-term partnerships, and practical support for families.',
+                ],
+                'sort_order' => 6,
+            ],
+            [
+                'slug' => 'jobs-announcement',
+                'title' => 'Jobs Announcement',
+                'content' => 'Open opportunities and future roles will be shared here as the organization grows.',
+                'route_name' => 'frontend.page',
+                'meta_title' => $siteName . ' | Jobs Announcement',
+                'meta_description' => 'View current and upcoming opportunities to join our team.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Jobs Announcement',
+                    'og_description' => 'View current and upcoming opportunities to join our team.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.page', ['slug' => 'jobs-announcement']),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Jobs Announcement',
+                    'url' => route('frontend.page', ['slug' => 'jobs-announcement']),
+                    'description' => 'Open opportunities and future roles will be shared here as the organization grows.',
+                ],
+                'sort_order' => 7,
+            ],
+            [
+                'slug' => 'annual-report',
+                'title' => 'Annual Report',
+                'content' => 'Annual reports, program summaries, and financial highlights will be published here.',
+                'route_name' => 'frontend.page',
+                'meta_title' => $siteName . ' | Annual Report',
+                'meta_description' => 'Review our yearly reports and impact summaries.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Annual Report',
+                    'og_description' => 'Review our yearly reports and impact summaries.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.page', ['slug' => 'annual-report']),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Annual Report',
+                    'url' => route('frontend.page', ['slug' => 'annual-report']),
+                    'description' => 'Annual reports, program summaries, and financial highlights will be published here.',
+                ],
+                'sort_order' => 8,
+            ],
+            [
+                'slug' => 'strategic-plan',
+                'title' => 'Strategic Plan',
+                'content' => 'Our strategic plan outlines the priorities, partnerships, and goals guiding our work.',
+                'route_name' => 'frontend.page',
+                'meta_title' => $siteName . ' | Strategic Plan',
+                'meta_description' => 'See the long-term goals that shape our community impact.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Strategic Plan',
+                    'og_description' => 'See the long-term goals that shape our community impact.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.page', ['slug' => 'strategic-plan']),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Strategic Plan',
+                    'url' => route('frontend.page', ['slug' => 'strategic-plan']),
+                    'description' => 'Our strategic plan outlines the priorities, partnerships, and goals guiding our work.',
+                ],
+                'sort_order' => 9,
+            ],
+            [
+                'slug' => 'partner',
+                'title' => 'Partner',
+                'content' => 'We welcome partners who want to support community-led education, health, and relief programs.',
+                'route_name' => 'frontend.page',
+                'meta_title' => $siteName . ' | Partner',
+                'meta_description' => 'Learn how to partner with us for greater community impact.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Partner',
+                    'og_description' => 'Learn how to partner with us for greater community impact.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.page', ['slug' => 'partner']),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Partner',
+                    'url' => route('frontend.page', ['slug' => 'partner']),
+                    'description' => 'We welcome partners who want to support community-led education, health, and relief programs.',
+                ],
+                'sort_order' => 10,
+            ],
+            [
+                'slug' => 'volunteer',
+                'title' => 'Volunteer',
+                'content' => 'Volunteers help us deliver practical care, organize support, and stay close to the community.',
+                'route_name' => 'frontend.page',
+                'meta_title' => $siteName . ' | Volunteer',
+                'meta_description' => 'Find out how to volunteer with our team and serve the community.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Volunteer',
+                    'og_description' => 'Find out how to volunteer with our team and serve the community.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.page', ['slug' => 'volunteer']),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Volunteer',
+                    'url' => route('frontend.page', ['slug' => 'volunteer']),
+                    'description' => 'Volunteers help us deliver practical care, organize support, and stay close to the community.',
+                ],
+                'sort_order' => 11,
+            ],
+            [
+                'slug' => 'image',
+                'title' => 'Image Gallery',
+                'content' => 'Photos and visual stories from our programs will appear here.',
+                'route_name' => 'frontend.page',
+                'meta_title' => $siteName . ' | Image Gallery',
+                'meta_description' => 'Browse visual highlights from our community programs.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Image Gallery',
+                    'og_description' => 'Browse visual highlights from our community programs.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.page', ['slug' => 'image']),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Image Gallery',
+                    'url' => route('frontend.page', ['slug' => 'image']),
+                    'description' => 'Photos and visual stories from our programs will appear here.',
+                ],
+                'sort_order' => 12,
+            ],
+            [
+                'slug' => 'video',
+                'title' => 'Video Stories',
+                'content' => 'Videos that share updates, testimony, and community stories will appear here.',
+                'route_name' => 'frontend.page',
+                'meta_title' => $siteName . ' | Video Stories',
+                'meta_description' => 'Watch videos that highlight our programs and community impact.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Video Stories',
+                    'og_description' => 'Watch videos that highlight our programs and community impact.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.page', ['slug' => 'video']),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Video Stories',
+                    'url' => route('frontend.page', ['slug' => 'video']),
+                    'description' => 'Videos that share updates, testimony, and community stories will appear here.',
+                ],
+                'sort_order' => 13,
+            ],
+            [
+                'slug' => 'contact',
+                'title' => 'Contact',
+                'content' => 'Get in touch for partnerships, volunteering, and support.',
+                'route_name' => 'frontend.contact',
+                'meta_title' => $siteName . ' | Contact',
+                'meta_description' => 'Reach our team for questions, partnerships, and support.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Contact',
+                    'og_description' => 'Reach our team for questions, partnerships, and support.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
+                ],
+                'canonical_url' => route('frontend.contact'),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Contact',
+                    'url' => route('frontend.contact'),
+                    'description' => 'Get in touch for partnerships, volunteering, and support.',
+                ],
+                'sort_order' => 14,
+            ],
+            [
                 'slug' => 'donate',
-                'page_category' => 'donation',
-                'icon' => 'hand-heart',
-                'content' => [
-                    'header' => [
-                        'title' => 'Support Our Mission',
-                        'description' => 'Your generosity empowers children and transforms communities.',
-                    ],
+                'title' => 'Donate',
+                'content' => 'Support our programs and help us reach more families and communities.',
+                'route_name' => 'frontend.donate',
+                'meta_title' => $siteName . ' | Donate',
+                'meta_description' => 'Support our programs with a donation and help expand our impact.',
+                'og_tags' => [
+                    'og_title' => $siteName . ' | Donate',
+                    'og_description' => 'Support our programs with a donation and help expand our impact.',
+                    'og_image' => $siteLogoUrl,
+                    'og_type' => 'website',
                 ],
-            ],
-            [
-                'title' => 'Contact', 
-                'slug' => 'contact', 
-                'page_category' => 'contact',
-                'icon' => 'mail',
-                'content' => [
-                    'header' => [
-                        'title' => 'Get in Touch',
-                        'description' => 'We are here to answer your questions and explore collaboration.',
-                    ],
-                    'info' => [
-                        'address' => 'Phnom Penh, Cambodia',
-                        'email' => 'info@bandoskomar.org',
-                        'phone' => '+855 23 456 789',
-                        'map_embed' => '#'
-                    ]
-                ]
+                'canonical_url' => route('frontend.donate'),
+                'structured_data' => [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebPage',
+                    'name' => 'Donate',
+                    'url' => route('frontend.donate'),
+                    'description' => 'Support our programs and help us reach more families and communities.',
+                ],
+                'sort_order' => 15,
             ],
         ];
 
-        foreach ($pages as $page) {
-            Page::updateOrCreate(['slug' => $page['slug']], $page);
+        foreach ($pages as $pageData) {
+            $pageData['menu_group'] = $pageData['menu_group'] ?? $this->menuGroupForSlug($pageData['slug']);
+
+            Page::updateOrCreate(
+                ['slug' => $pageData['slug']],
+                array_merge(
+                    $pageData,
+                    [
+                        'is_active' => true,
+                        'sitemap_include' => true,
+                        'translations' => $this->localizedTranslations($pageData['title'], $pageData['content']),
+                    ]
+                )
+            );
         }
+
+        $this->command?->info('Website pages seeded successfully.');
+    }
+
+    private function localizedTranslations(string $title, string $content): array
+    {
+        $translations = [];
+
+        foreach (PageLocales::all() as $locale) {
+            $translations[$locale] = [
+                'title' => $title,
+                'content' => $content,
+            ];
+        }
+
+        return $translations;
+    }
+
+    private function localizedContent(array $content): array
+    {
+        $localized = [];
+
+        foreach (PageLocales::all() as $locale) {
+            $localized[$locale] = $content;
+        }
+
+        return $localized;
+    }
+
+    private function menuGroupForSlug(string $slug): string
+    {
+        return match ($slug) {
+            'home', 'platform', 'about-us', 'product', 'history' => 'main',
+            'jobs-announcement', 'annual-report', 'strategic-plan', 'partner' => 'resources',
+            'volunteer', 'image', 'video' => 'involved',
+            'contact', 'donate' => 'hidden',
+            default => 'more',
+        };
     }
 }

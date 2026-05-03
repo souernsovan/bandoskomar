@@ -1,7 +1,6 @@
 <?php
 
 namespace Database\Seeders;
-
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -14,10 +13,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Run admin seeder
         $this->call([
-            AdminUserSeeder::class,
-            CategorySeeder::class,
+            PermissionsSeeder::class,
+            UsersSeeder::class,
+            SiteSettingSeeder::class,
             PageSeeder::class,
+            CategorySeeder::class,
+            ProviderSeeder::class,
+            ProductSeeder::class,
         ]);
     }
 }

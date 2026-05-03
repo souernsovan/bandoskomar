@@ -2,10 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
 use App\Models\Page;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\ServiceProvider;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,49 +26,32 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::composer('layouts.app', function ($view) {
-            $pages = collect();
+        SymfonyRequest::setTrustedProxies(
+            ['*'], // Trust all proxies
+            SymfonyRequest::HEADER_X_FORWARDED_FOR |
+            SymfonyRequest::HEADER_X_FORWARDED_HOST |
+            SymfonyRequest::HEADER_X_FORWARDED_PORT |
+            SymfonyRequest::HEADER_X_FORWARDED_PROTO
+        );
 
-            if (Schema::hasTable('pages')) {
-                $knownRoutes = [
-                    'home' => 'home',
-                    'about-us' => 'about',
-                    'history' => 'history',
-                    'our-program' => 'programs',
-                    'annual-report' => 'resources.annual-report',
-                    'publication' => 'resources.publication',
-                    'photo-gallery' => 'resources.photo-gallery',
-                    'video-center' => 'resources.video-center',
-                    'support-us' => 'get-involved.support-us',
-                    'sponsor-child' => 'get-involved.sponsor-child',
-                    'ways-to-give' => 'get-involved.ways-to-give',
-                    'career' => 'get-involved.career',
-                    'donate' => 'donate',
-                    'contact' => 'contact',
-                ];
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
 
-                $pages = Page::query()
-                    ->where('status', 'published')
-                    ->orderBy('id')
-                    ->get()
-                    ->map(function (Page $page) use ($knownRoutes) {
-                        $routeName = $knownRoutes[$page->slug] ?? null;
-                        $url = $routeName ? route($routeName) : route('pages.custom', $page);
-
-                        return [
-                            'title' => $page->title,
-                            'slug' => $page->slug,
-                            'category' => $page->page_category ?? 'main',
-                            'url' => $url,
-                            'active' => request()->url() === $url,
-                        ];
-                    });
+        Gate::before(function (?User $user, string $ability) {
+            if ($user && $user->isSystem()) {
+                return true;
             }
+        });
 
+        View::composer('frontend.layouts.app', function ($view) {
             $view->with([
-                'frontendNavPages' => $pages->groupBy('category'),
-                'frontendMobilePages' => $pages,
-                'frontendDonatePage' => $pages->firstWhere('category', 'donation'),
+                'headerPages' => Page::getForMenu(),
+                'productCategories' => Category::where('status', 'active')->orderBy('name')->get(),
+                'siteName' => \App\Models\SiteSetting::get('site_name', config('app.name')),
+                'siteLogoPath' => \App\Models\SiteSetting::siteLogoPath(),
+                'siteIconPath' => \App\Models\SiteSetting::siteIconPath(),
+                'siteIconMimeType' => \App\Models\SiteSetting::siteIconMimeType(),
             ]);
         });
     }

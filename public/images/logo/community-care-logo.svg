@@ -1,0 +1,8 @@
+<svg width="220" height="64" viewBox="0 0 220 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Community Care Foundation">
+  <rect x="0" y="0" width="220" height="64" rx="20" fill="#F8FAFC"/>
+  <circle cx="32" cy="32" r="20" fill="#0F766E"/>
+  <path d="M32 20.5C28.5 20.5 25.5 23.1 25.5 26.7C25.5 31.8 32 36.9 32 36.9C32 36.9 38.5 31.8 38.5 26.7C38.5 23.1 35.5 20.5 32 20.5Z" fill="white"/>
+  <path d="M32 35.2C29.7 35.2 27.8 33.3 27.8 31C27.8 28.7 29.7 26.8 32 26.8C34.3 26.8 36.2 28.7 36.2 31C36.2 33.3 34.3 35.2 32 35.2Z" fill="#0F766E"/>
+  <text x="64" y="29" fill="#0F172A" font-size="18" font-weight="700" font-family="Arial, Helvetica, sans-serif">Community Care</text>
+  <text x="64" y="47" fill="#0F766E" font-size="12" font-weight="600" font-family="Arial, Helvetica, sans-serif" letter-spacing="2">FOUNDATION</text>
+</svg>

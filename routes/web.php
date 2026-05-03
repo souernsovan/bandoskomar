@@ -1,49 +1,109 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SystemManagement\UsersController;
+use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\PageController as FrontendPageController;
+use App\Http\Controllers\Frontend\SitemapController;
+use App\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\SystemManagement\SiteSettingController;
+use App\Http\Controllers\Admin\SystemManagement\RoleController;
+use App\Http\Controllers\Admin\SystemManagement\AuditLogController;
+use App\Http\Controllers\Admin\SystemManagement\PageController;
+use App\Http\Controllers\Admin\ProductController;
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/about', [HomeController::class, 'about'])->name('about');
-Route::get('/history', [HomeController::class, 'history'])->name('history');
-Route::get('/programs', [HomeController::class, 'programs'])->name('programs');
-Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
-Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'submit'])->name('contact.submit');
+/*
+|--------------------------------------------------------------------------
+| Frontend Routes (default URL)
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/resources/annual-report', [HomeController::class, 'annualReport'])->name('resources.annual-report');
-Route::get('/resources/publication', [HomeController::class, 'publication'])->name('resources.publication');
-Route::get('/resources/photo-gallery', [HomeController::class, 'photoGallery'])->name('resources.photo-gallery');
-Route::get('/resources/video-center', [HomeController::class, 'videoCenter'])->name('resources.video-center');
+Route::get('/locale/{locale}', function (string $locale) {
+    $supported = ['en', 'id', 'th', 'vi', 'km', 'ms'];
+    if (in_array($locale, $supported, true)) {
+        session()->put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('locale.switch');
 
-Route::get('/get-involved/support-us', [HomeController::class, 'supportUs'])->name('get-involved.support-us');
-Route::get('/get-involved/sponsor-child', [HomeController::class, 'sponsorChild'])->name('get-involved.sponsor-child');
-Route::get('/get-involved/ways-to-give', [HomeController::class, 'waysToGive'])->name('get-involved.ways-to-give');
-Route::get('/get-involved/career', [HomeController::class, 'career'])->name('get-involved.career');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('frontend.sitemap');
+Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('frontend.robots');
 
-Route::get('/donate', [HomeController::class, 'donate'])->name('donate');
+Route::get('/', [HomeController::class, 'index'])->name('frontend.home');
+Route::get('/platform', function () {
+    return redirect()->route('frontend.platform');
+})->name('legacy.frontend.platform');
+Route::get('/product', function () {
+    return redirect()->route('frontend.product');
+})->name('legacy.frontend.product');
+Route::get('/product/{slug}', function (string $slug) {
+    return redirect()->route('frontend.product.show', ['slug' => $slug], 301);
+})->where('slug', '[a-z0-9\-]+')->name('legacy.frontend.product.show');
+Route::get('/products/{product:slug}', function (App\Models\Product $product) {
+    return redirect()->route('frontend.product.detail', ['product' => $product->slug], 301);
+})->name('legacy.frontend.product.detail');
+Route::get('/mission', fn () => app(FrontendPageController::class)->show('platform'))->name('frontend.platform');
+Route::get('/history', fn () => app(FrontendPageController::class)->show('history'))->name('frontend.history');
+Route::get('/programs', fn () => app(FrontendPageController::class)->show('product'))->name('frontend.product');
+Route::get('/programs/{slug}', [FrontendPageController::class, 'showProduct'])
+    ->where('slug', '[a-z0-9\-]+')
+    ->name('frontend.product.show');
+Route::get('/programs/details/{product:slug}', [FrontendPageController::class, 'showProductDetail'])
+    ->name('frontend.product.detail');
+Route::get('/about-us', fn () => app(FrontendPageController::class)->show('about-us'))->name('frontend.about-us');
+Route::get('/contact', fn () => app(FrontendPageController::class)->show('contact'))->name('frontend.contact');
+Route::get('/donate', fn () => app(FrontendPageController::class)->show('donate'))->name('frontend.donate');
+Route::get('/page/{slug}', [FrontendPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('frontend.page');
 
-Route::get('/posts', [\App\Http\Controllers\PostController::class, 'index'])->name('posts.index');
-Route::get('/posts/{post}', [\App\Http\Controllers\PostController::class, 'show'])->name('posts.show');
-Route::get('/pages/{page}', [HomeController::class, 'customPage'])->name('pages.custom');
+/*
+|--------------------------------------------------------------------------
+| Admin Panel Routes - Authentication
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::get('/logout', function () {
-    Auth::logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
+Route::prefix('admin')->group(function () {
+    Route::get('/', function () {
+        return auth()->check()
+            ? redirect()->route('dashboard')
+            : redirect()->route('login');
+    })->name('admin');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
 
-    return redirect()->route('home');
-})->name('logout');
+/*
+|--------------------------------------------------------------------------
+| Admin Panel Routes - Protected
+|--------------------------------------------------------------------------
+*/
 
-// Admin Routes
-Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
-    Route::resource('posts', \App\Http\Controllers\Admin\PostController::class)->except(['show']);
-    Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class)->only(['index', 'store', 'destroy']);
-    Route::resource('pages', \App\Http\Controllers\Admin\PageController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-    Route::get('/donations', [\App\Http\Controllers\Admin\DonationController::class, 'index'])->name('donations.index');
+Route::middleware(['web', Authenticate::class, 'check.admin.permission'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // system management
+    Route::resource('users', UsersController::class)->names('system-management.users');
+    Route::resource('site-settings', SiteSettingController::class)->names('system-management.site-settings');
+    Route::post('pages/{page}/staged-media', [PageController::class, 'stagedMediaUpload'])
+        ->name('system-management.pages.staged-media')
+        ->middleware('extend.page.multipart');
+    Route::resource('pages', PageController::class)
+        ->names('system-management.pages')
+        ->middleware('extend.page.multipart');
+    Route::get('roles', [RoleController::class, 'index'])->name('system-management.roles.index');
+    Route::get('roles/create', [RoleController::class, 'create'])->name('system-management.roles.create');
+    Route::post('roles', [RoleController::class, 'store'])->name('system-management.roles.store');
+    Route::get('roles/{roleName}', [RoleController::class, 'show'])->name('system-management.roles.show');
+    Route::get('roles/{roleName}/edit', [RoleController::class, 'edit'])->name('system-management.roles.edit');
+    Route::put('roles/{roleName}', [RoleController::class, 'update'])->name('system-management.roles.update');
+
+    // Products
+    Route::resource('products', ProductController::class)->names('admin.products');
+
+    // Audit Logs
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('system-management.audit-logs.index');
+    Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('system-management.audit-logs.show');
+    Route::post('theme/log', [AuditLogController::class, 'logThemeChange'])->name('admin.theme.log');
 });
