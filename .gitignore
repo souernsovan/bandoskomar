@@ -1,0 +1,39 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Laravel specific
+/public/hot
+/public/storage
+/storage/*.key
+/vendor/
+/node_modules/
+/npm-debug.log
+/yarn-error.log
+
+# PHP
+*.phar
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs and temp files
+*.log
+bootstrap/cache/
+
+# Testing
+.phpunit.result.cache
+/coverage/
+
+# Build artifacts
+/public/build/
+/mix-manifest.json
+
+# OS files
+Thumbs.db
