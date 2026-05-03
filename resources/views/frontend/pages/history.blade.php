@@ -24,7 +24,7 @@
     <section class="relative h-[80vh] min-h-[600px] flex items-center overflow-hidden" style="--hero-bk-navy: #1E2D53; --hero-bk-orange: #F68B1E;">
         <!-- Hero Image Background -->
         <div class="absolute inset-0 z-0">
-            <img src="http://127.0.0.1:8001/assets/images/hero.png" alt="Hero Background" class="w-full h-full object-cover">
+            <img src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?q=80&w=1600&auto=format&fit=crop" alt="Hero Background" class="w-full h-full object-cover">
             <div class="absolute inset-0" style="background: linear-gradient(to right, rgba(30,45,83,0.9) 0%, rgba(30,45,83,0.5) 60%, transparent 100%);"></div>
         </div>
 
