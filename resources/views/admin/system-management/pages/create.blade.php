@@ -57,15 +57,7 @@
                             <span class="form-error">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div class="form-group">
-                        <label for="route_name" class="form-label">Route Name</label>
-                        <input type="text" name="route_name" id="route_name" value="{{ old('route_name') }}"
-                            class="form-input @error('route_name') error @enderror" placeholder="e.g. frontend.page or frontend.contact">
-                        <small class="form-hint">Optional. Use a named frontend route or leave blank to use the page slug.</small>
-                        @error('route_name')
-                            <span class="form-error">{{ $message }}</span>
-                        @enderror
-                    </div>
+                
                     <div class="form-group">
                         <label for="menu_group" class="form-label">Menu Placement</label>
                         <select name="menu_group" id="menu_group" class="form-input @error('menu_group') error @enderror">
@@ -204,23 +196,6 @@
                             <span class="form-error">{{ $message }}</span>
                         @enderror
                     </div>
-                </div>
-            </div>
-
-            <div class="edit-page-section">
-                <h3 class="edit-section-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
-                    </svg>
-                    Structured Data (JSON-LD)
-                </h3>
-                <div class="form-group">
-                    <textarea name="structured_data" id="structured_data" rows="8"
-                        class="form-input form-textarea font-mono @error('structured_data') error @enderror" placeholder='{"@@context":"https://schema.org","@@type":"WebPage","name":"..."}'>{{ old('structured_data') }}</textarea>
-                    <small class="form-hint">Valid JSON-LD for rich snippets in search results</small>
-                    @error('structured_data')
-                        <span class="form-error">{{ $message }}</span>
-                    @enderror
                 </div>
             </div>
 

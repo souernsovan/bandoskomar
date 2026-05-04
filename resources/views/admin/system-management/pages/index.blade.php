@@ -88,7 +88,6 @@
                         <th class="th-number">#</th>
                         <th>Title</th>
                         <th>Slug</th>
-                        <th>Route</th>
                         <th>Menu</th>
                         <th>Order</th>
                         <th>Status</th>
@@ -101,13 +100,7 @@
                             <td class="td-number">{{ $pages->firstItem() + $index }}</td>
                             <td>{{ $page->title }}</td>
                             <td><code>{{ $page->slug }}</code></td>
-                            <td>
-                                @if ($page->route_name)
-                                    <code>{{ $page->route_name }}</code>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td>
+                           
                             @php
                                 $menuGroup = $page->getMenuGroup();
                                 $menuBadgeClass = $menuGroup === 'main' ? 'status-active' : ($menuGroup === 'hidden' ? 'status-inactive' : 'role-staff');
