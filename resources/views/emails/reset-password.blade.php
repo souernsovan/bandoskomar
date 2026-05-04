@@ -191,7 +191,7 @@
 
                 <p style="font-size: 14px; margin-top: 40px;">
                     Best regards,<br>
-                    <strong>{{ \App\Models\SiteSetting::get('site_name', 'CLICKENGINE') }}</strong>
+                    <strong>{{ \App\Models\SiteSetting::get('site_name', config('app.name')) }}</strong>
                 </p>
             </div>
 
@@ -208,7 +208,7 @@
                     Sent to <strong>{{ $email }}</strong><br>
                     You are receiving this because a password reset was initiated for your account.<br>
                     <br>
-                    &copy; {{ date('Y') }} {{ \App\Models\SiteSetting::get('site_name', 'CLICKENGINE') }}<br>
+                    &copy; {{ date('Y') }} {{ \App\Models\SiteSetting::get('site_name', config('app.name')) }}<br>
                 </p>
             </div>
         </div>

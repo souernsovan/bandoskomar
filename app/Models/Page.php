@@ -138,6 +138,28 @@ class Page extends Model
         return self::MENU_GROUP_LABELS[$this->getMenuGroup()] ?? ucfirst($this->getMenuGroup());
     }
 
+    /**
+     * Determine whether the shared frontend banner should be rendered.
+     */
+    public function shouldShowBanner(): bool
+    {
+        return in_array($this->slug, [
+            'platform',
+            'about-us',
+            'product',
+            'history',
+            'contact',
+            'donate',
+            'partner',
+            'volunteer',
+            'image-gallery',
+            'video-stories',
+            'annual-report',
+            'strategic-plan',
+            'jobs-announcement',
+        ], true);
+    }
+
     private function isPageContentLocaleKeyed(array $pc): bool
     {
         $locales = \App\Support\PageLocales::all();

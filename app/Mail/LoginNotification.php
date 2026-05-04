@@ -36,7 +36,7 @@ class LoginNotification extends Mailable
      */
     public function envelope(): Envelope
     {
-        $appName = SiteSetting::where('key', 'site_name')->first()->value ?? config('app.name');
+        $appName = SiteSetting::get('site_name', config('app.name'));
         
         return new Envelope(
             subject: 'New Login to Your Account - ' . $appName,

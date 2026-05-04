@@ -74,6 +74,7 @@ class PageController extends Controller
             public $og_tags;
             public $canonical_url;
             public $structured_data;
+            public $show_banner = true;
 
             public function __construct($category, $productPage) {
                 $this->slug = $category->slug;
@@ -113,6 +114,7 @@ class PageController extends Controller
             public $canonical_url;
             public $og_tags;
             public $structured_data;
+            public $show_banner = false;
 
             public function __construct($product) {
                 $this->meta_title = $product->title;

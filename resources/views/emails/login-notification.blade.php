@@ -252,14 +252,14 @@
 
                 <p style="font-size: 14px; margin-top: 40px;">
                     Best regards,<br>
-                    <strong>{{  \App\Models\SiteSetting::get('site_name', 'CLICKENGINE') }}</strong>
+                    <strong>{{  \App\Models\SiteSetting::get('site_name', config('app.name')) }}</strong>
                 </p>
             </div>
 
             <div class="footer">
                 <p class="footer-text">
                     Sent to <strong>{{ $user->email }}</strong><br>
-                    &copy; {{ date('Y') }} {{ \App\Models\SiteSetting::get('site_name', 'CLICKENGINE') }}
+                    &copy; {{ date('Y') }} {{ \App\Models\SiteSetting::get('site_name', config('app.name')) }}
                 </p>
             </div>
         </div>

@@ -35,7 +35,7 @@ class ResetPasswordNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Reset Password - ' . SiteSetting::get('site_name', 'CLICKENGINE'),
+            subject: 'Reset Password - ' . SiteSetting::get('site_name', config('app.name')),
             from: new Address(config('mail.from.address'), config('mail.from.name')),
             to: [new Address($this->email)],
         );

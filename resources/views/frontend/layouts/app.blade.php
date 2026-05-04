@@ -9,14 +9,14 @@
         $siteName = $siteName ?? \App\Models\SiteSetting::get('site_name', config('app.name'));
         $page = $page ?? null;
         $currentLocale = app()->getLocale();
-        $title = $page ? ($page->meta_title ?? $page->getTitleForLocale()) : null;
-        $description = $page?->meta_description ?? \App\Models\SiteSetting::get('site_description', '');
+        $metaTitle = $page ? ($page->meta_title ?? $page->getTitleForLocale()) : null;
+        $metaDescription = $page?->meta_description ?? \App\Models\SiteSetting::get('site_description', '');
         $canonical = $page?->canonical_url ?? url()->current();
         $ogTags = $page?->og_tags ?? [];
     @endphp
 
-    <title>{{ $title ? $title . ' - ' . $siteName : $siteName }}</title>
-    <meta name="description" content="{{ $description ?? '' }}">
+    <title>{{ $metaTitle ? $metaTitle . ' - ' . $siteName : $siteName }}</title>
+    <meta name="description" content="{{ $metaDescription ?? '' }}">
     <meta name="robots" content="index, follow">
 
     <link rel="icon" href="{{ asset($siteIconPath ?? \App\Models\SiteSetting::siteIconPath()) }}" type="{{ $siteIconMimeType ?? \App\Models\SiteSetting::siteIconMimeType() }}">
@@ -27,8 +27,8 @@
     {{-- Open Graph --}}
     <meta property="og:site_name" content="{{ $siteName }}">
     <meta property="og:locale" content="{{ str_replace('-', '_', $currentLocale) }}">
-    <meta property="og:title" content="{{ $ogTags['og_title'] ?? $title ?? $siteName }}">
-    <meta property="og:description" content="{{ $ogTags['og_description'] ?? $description ?? '' }}">
+    <meta property="og:title" content="{{ $ogTags['og_title'] ?? $metaTitle ?? $siteName }}">
+    <meta property="og:description" content="{{ $ogTags['og_description'] ?? $metaDescription ?? '' }}">
     <meta property="og:url" content="{{ $canonical }}">
     <meta property="og:type" content="{{ $ogTags['og_type'] ?? 'website' }}">
     @if(!empty($ogTags['og_image']))
@@ -37,8 +37,8 @@
 
     {{-- Twitter Card --}}
     <meta name="twitter:card" content="{{ !empty($ogTags['og_image']) ? 'summary_large_image' : 'summary' }}">
-    <meta name="twitter:title" content="{{ $ogTags['og_title'] ?? $title ?? $siteName }}">
-    <meta name="twitter:description" content="{{ $ogTags['og_description'] ?? $description ?? '' }}">
+    <meta name="twitter:title" content="{{ $ogTags['og_title'] ?? $metaTitle ?? $siteName }}">
+    <meta name="twitter:description" content="{{ $ogTags['og_description'] ?? $metaDescription ?? '' }}">
     @if(!empty($ogTags['og_image']))
     <meta name="twitter:image" content="{{ $ogTags['og_image'] }}">
     @endif
@@ -51,12 +51,28 @@
     <script type="application/ld+json">{!! json_encode($page->structured_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @endif
 
-    @vite(['resources/css/frontend/app.css', 'resources/css/frontend/app.js'])
+     @vite(['resources/css/frontend/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
 <body class="fe-body">
     @include('frontend.partials.header')
     <main class="fe-main">
+        @php
+            $showPageBanner = false;
+
+            if (isset($page) && $page) {
+                if (property_exists($page, 'show_banner')) {
+                    $showPageBanner = (bool) $page->show_banner;
+                } elseif (method_exists($page, 'shouldShowBanner')) {
+                    $showPageBanner = (bool) $page->shouldShowBanner();
+                }
+            }
+        @endphp
+
+        @if ($showPageBanner)
+            @include('frontend.partials.page-banner', ['page' => $page])
+        @endif
+
         @yield('content')
     </main>
     @include('frontend.partials.footer')
