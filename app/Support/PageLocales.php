@@ -4,15 +4,12 @@ namespace App\Support;
 
 class PageLocales
 {
-    public const SUPPORTED = ['en', 'id', 'th', 'vi', 'km', 'ms'];
+    public const SUPPORTED = ['en', 'km', 'fr'];
 
     public const LABELS = [
         'en' => ['label' => 'EN', 'name' => 'English', 'flag' => '🇺🇸'],
-        'id' => ['label' => 'ID', 'name' => 'Indonesian', 'flag' => '🇮🇩'],
-        'th' => ['label' => 'TH', 'name' => 'Thai', 'flag' => '🇹🇭'],
-        'vi' => ['label' => 'VN', 'name' => 'Vietnamese', 'flag' => '🇻🇳'],
         'km' => ['label' => 'KH', 'name' => 'Khmer', 'flag' => '🇰🇭'],
-        'ms' => ['label' => 'MY', 'name' => 'Malay', 'flag' => '🇲🇾'],
+        'fr' => ['label' => 'FR', 'name' => 'French', 'flag' => '🇫🇷'],
     ];
 
     public static function all(): array

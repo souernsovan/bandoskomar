@@ -239,36 +239,7 @@
                 </div>
 
                 @if (!in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product']))
-                    <div class="edit-page-section">
-                        <h3 class="edit-section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                            </svg>
-                            Page Content (JSON)
-                        </h3>
-                        @foreach ($locales ?? \App\Support\PageLocales::labels() as $code => $info)
-                            @php $pcLocale = $pageContentByLocale[$code] ?? []; @endphp
-                            <div class="lang-panel {{ $loop->first ? 'active' : '' }}"
-                                id="lang-panel-content-{{ $code }}" role="tabpanel">
-                                <div class="form-grid mt-2">
-                                    <div class="form-group full-width">
-                                        <label for="page_content_{{ $code }}" class="form-label">Page Content -
-                                            {{ $info['name'] }} (JSON)</label>
-                                        <textarea name="page_content_locale[{{ $code }}]" id="page_content_{{ $code }}" rows="10"
-                                            class="form-input form-textarea font-mono @error('page_content') error @enderror"
-                                            placeholder='{"key": "value", ...}'>{{ old("page_content_locale.{$code}", json_encode($pcLocale, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
-                                        <small class="form-hint">Structured content as JSON for
-                                            {{ $info['name'] }}.</small>
-                                        @error('page_content')
-                                            <span class="form-error">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+                   
                 @elseif (($pageType ?? $page->slug) === 'home')
                     <div class="edit-page-section">
                         @foreach ($locales ?? \App\Support\PageLocales::labels() as $code => $info)
