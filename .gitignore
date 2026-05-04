@@ -3,37 +3,37 @@
 .env.local
 .env.*.local
 
-# Laravel specific
-/public/hot
-/public/storage
-/storage/*.key
+# Laravel
 /vendor/
 /node_modules/
-/npm-debug.log
-/yarn-error.log
+/public/hot
+/public/storage
+/public/build/
+/storage/*.key
+/bootstrap/cache/*.php
 
-# PHP
-*.phar
-
-# IDE and editor files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Logs and temp files
+# Logs
 *.log
-bootstrap/cache/
+npm-debug.log
+yarn-error.log
 
 # Testing
 .phpunit.result.cache
 /coverage/
 
 # Build artifacts
-/public/build/
 /mix-manifest.json
 
+# PHP
+*.phar
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
 # OS files
+.DS_Store
 Thumbs.db
