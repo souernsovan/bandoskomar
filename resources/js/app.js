@@ -1,5 +1,6 @@
 import './bootstrap';
 import './theme';
+import '../css/frontend/app.js';
 import UsersHandler from './users-handler';
 import SiteSettingHandler from './site-setting-handler';
 import ProductsHandler from './products-handler';

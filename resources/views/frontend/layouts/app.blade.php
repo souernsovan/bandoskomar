@@ -74,6 +74,10 @@
         @endif
 
         @yield('content')
+
+        @if ($showPageBanner)
+            @include('frontend.partials.page-enrichments', ['page' => $page])
+        @endif
     </main>
     @include('frontend.partials.footer')
     @stack('scripts')
