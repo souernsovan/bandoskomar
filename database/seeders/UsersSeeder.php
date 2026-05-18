@@ -15,7 +15,7 @@ class UsersSeeder extends Seeder
     {
         // Create system super-admin (protected)
         User::updateOrCreate([
-            'email' => 'admin@cgg.holdings',
+            'email' => 'admin@bandoskomar.com',
         ], [
             'name' => 'Administrator',
             'password' => Hash::make('password'),

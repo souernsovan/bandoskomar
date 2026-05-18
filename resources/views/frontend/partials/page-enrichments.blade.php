@@ -184,7 +184,7 @@
                 ['step' => '02', 'title' => 'Community care', 'description' => 'Program deliveries, events, and local support in action.'],
                 ['step' => '03', 'title' => 'Everyday impact', 'description' => 'The small moments that show progress, dignity, and hope.'],
             ],
-            'primary' => ['label' => 'Watch stories', 'route' => 'frontend.page', 'params' => ['slug' => 'video-stories']],
+            'primary' => ['label' => 'Watch stories', 'route' => 'frontend.page', 'params' => ['slug' => 'video']],
             'secondary' => ['label' => 'Contact us', 'route' => 'frontend.contact'],
         ],
         'video-stories' => [
@@ -196,7 +196,7 @@
                 ['step' => '02', 'title' => 'Program updates', 'description' => 'See how support turns into practical outcomes.'],
                 ['step' => '03', 'title' => 'Share with others', 'description' => 'Help spread the word by sharing stories with your network.'],
             ],
-            'primary' => ['label' => 'View gallery', 'route' => 'frontend.page', 'params' => ['slug' => 'image-gallery']],
+            'primary' => ['label' => 'View gallery', 'route' => 'frontend.gallery'],
             'secondary' => ['label' => 'Contact us', 'route' => 'frontend.contact'],
         ],
         'default' => [

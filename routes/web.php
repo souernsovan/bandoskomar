@@ -54,7 +54,18 @@ Route::get('/programs/details/{product:slug}', [FrontendPageController::class, '
     ->name('frontend.product.detail');
 Route::get('/about-us', fn () => app(FrontendPageController::class)->show('about-us'))->name('frontend.about-us');
 Route::get('/contact', fn () => app(FrontendPageController::class)->show('contact'))->name('frontend.contact');
+Route::post('/contact', [FrontendPageController::class, 'sendContactMessage'])->name('frontend.contact.send');
 Route::get('/donate', fn () => app(FrontendPageController::class)->show('donate'))->name('frontend.donate');
+Route::get('/gallery', [FrontendPageController::class, 'gallery'])->name('frontend.gallery');
+Route::get('/image-gallery', function () {
+    return redirect()->route('frontend.gallery', [], 301);
+})->name('legacy.frontend.gallery');
+Route::get('/page/image-gallery', function () {
+    return redirect()->route('frontend.gallery', [], 301);
+})->name('legacy.frontend.page.image-gallery');
+Route::get('/page/image', function () {
+    return redirect()->route('frontend.gallery', [], 301);
+})->name('legacy.frontend.page.image');
 Route::get('/page/{slug}', [FrontendPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('frontend.page');
 
 /*

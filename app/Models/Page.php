@@ -124,7 +124,8 @@ class Page extends Model
         return match ($this->slug) {
             'home', 'platform', 'about-us', 'product', 'history' => 'main',
             'jobs-announcement', 'annual-report', 'strategic-plan', 'partner' => 'resources',
-            'volunteer', 'image', 'video' => 'involved',
+            'volunteer', 'image-gallery', 'video' => 'involved',
+            'image' => 'hidden',
             'contact', 'donate' => 'hidden',
             default => 'more',
         };
@@ -172,13 +173,13 @@ class Page extends Model
     }
 
     /**
-     * Get the "page type" for special pages (home, platform, about-us, product).
+     * Get the "page type" for special pages (home, platform, about-us, product, contact).
      * Used so that changing the slug does not change which edit form or save logic is used.
      * Prefer slug; if slug was changed, infer from page_content structure.
      */
     public function getPageType(): ?string
     {
-        $special = ['home', 'platform', 'about-us', 'product'];
+        $special = ['home', 'platform', 'about-us', 'product', 'contact'];
         if (in_array($this->slug, $special, true)) {
             return $this->slug;
         }
@@ -208,6 +209,17 @@ class Page extends Model
         }
         if (array_key_exists('products_title', $first) || array_key_exists('description', $first)) {
             return 'product';
+        }
+        if (
+            array_key_exists('contact_methods', $first)
+            || array_key_exists('contact_info_title', $first)
+            || array_key_exists('confirm_open', $first)
+            || array_key_exists('page_intro', $first)
+            || array_key_exists('form_title', $first)
+            || array_key_exists('target_email', $first)
+            || array_key_exists('address', $first)
+        ) {
+            return 'contact';
         }
         return null;
     }

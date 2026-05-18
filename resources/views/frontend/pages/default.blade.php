@@ -27,8 +27,8 @@
             $leadText = 'We welcome people and organizations who want to collaborate on lasting impact.';
         } elseif ($pageSlug === 'volunteer') {
             $leadText = 'Find simple ways to give your time, skills, and care where they matter most.';
-        } elseif ($pageSlug === 'image') {
-            $leadText = 'Browse photos and visual stories from our community programs and events.';
+        } elseif ($pageSlug === 'image-gallery' || $pageSlug === 'image') {
+            $leadText = 'Browse photos, logos, and visual assets from the public website archive.';
         } elseif ($pageSlug === 'video') {
             $leadText = 'Watch stories and updates from the communities we serve, shared in their own voices.';
         }

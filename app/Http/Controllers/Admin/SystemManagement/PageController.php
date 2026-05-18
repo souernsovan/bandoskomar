@@ -150,6 +150,8 @@ class PageController extends Controller
             $data['product_partner_images'] = $this->normalizePartnerImages(
                 $data['pageContentByLocale']['en']['partner_images'] ?? $data['pageContentByLocale'][array_key_first($data['pageContentByLocale'])]['partner_images'] ?? []
             );
+        } elseif ($pageType === 'contact') {
+            // Contact uses the shared locale data editor below; no extra assets needed here.
         } elseif ($pageType !== 'home') {
             $data['page_content_json'] = $page->page_content
                 ? json_encode($page->page_content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
@@ -518,7 +520,7 @@ class PageController extends Controller
         // Use page type (from content structure) so we don't overwrite special page content
         // when slug was changed (e.g. home → homes) - otherwise we'd build from empty
         // page_content_locale and lose all data
-        if (!in_array($pageType ?? $originalSlug, ['home', 'platform', 'about-us', 'product'])) {
+        if (!in_array($pageType ?? $originalSlug, ['home', 'platform', 'about-us', 'product', 'contact'])) {
             $pageContentByLocale = $request->input('page_content_locale', []);
             $built = [];
             foreach (PageLocales::all() as $locale) {
@@ -578,6 +580,8 @@ class PageController extends Controller
             $this->saveAboutUsSections($request, $page);
         } elseif ($effectiveType === 'product') {
             $this->saveProductSections($request, $page);
+        } elseif ($effectiveType === 'contact') {
+            $this->saveContactSections($request, $page);
         }
 
         return redirect()->route('system-management.pages.index')->with('success', 'Page updated successfully.');
@@ -994,6 +998,154 @@ class PageController extends Controller
         $oldContent = $page->page_content ?? [];
         $page->update(['page_content' => $content]);
         AuditLogService::logEdit(AuditLog::MODULE_PAGE, $page->title . ' (Product sections)', ['page_content' => $oldContent], ['page_content' => $content]);
+    }
+
+    private function saveContactSections(Request $request, Page $page): void
+    {
+        $sections = $request->input('contact_sections', []);
+        if (!is_array($sections)) {
+            $sections = [];
+        }
+
+        $defaults = [
+            'page_title' => 'Contact Us',
+            'page_intro' => "We're here to help. Feel free to reach out through any of the channels below or send us a message directly.",
+            'contact_info_title' => 'Contact Information',
+            'confirm_open' => 'Open this contact method?',
+            'address' => '123 Main Street, Phnom Penh, Cambodia',
+            'phone' => '+855 23 123 456',
+            'email' => 'info@bandoskomar.org',
+            'office_hours' => 'Monday-Friday, 8:00-17:00 (ICT)',
+            'form_title' => 'Send Us a Message',
+            'form_subtitle' => 'Fill out the form below and we will get back to you as soon as possible.',
+            'success_message' => 'Thank you! Your message has been sent and we will respond shortly.',
+            'target_email' => 'info@bandoskomar.org',
+            'labels' => [
+                'full_name' => 'Full Name',
+                'email_address' => 'Email Address',
+                'message' => 'Message',
+                'send_message' => 'Send Message',
+            ],
+            'placeholders' => [
+                'full_name' => 'Your full name',
+                'email_address' => 'you@example.com',
+                'message' => 'How can we help you?',
+            ],
+            'messages' => [
+                'no_methods' => 'No contact methods are available yet.',
+            ],
+        ];
+
+        $content = [];
+        $methodDefinitions = [
+            ['key' => 'email', 'label' => 'Email'],
+            ['key' => 'whatsapp', 'label' => 'WhatsApp'],
+            ['key' => 'telegram', 'label' => 'Telegram'],
+            ['key' => 'signal', 'label' => 'Signal'],
+            ['key' => 'teams', 'label' => 'Microsoft Teams'],
+            ['key' => 'wechat', 'label' => 'WeChat'],
+        ];
+
+        foreach (PageLocales::all() as $locale) {
+            $s = is_array($sections[$locale] ?? null) ? $sections[$locale] : [];
+            $labels = is_array($s['labels'] ?? null) ? $s['labels'] : [];
+            $placeholders = is_array($s['placeholders'] ?? null) ? $s['placeholders'] : [];
+            $messages = is_array($s['messages'] ?? null) ? $s['messages'] : [];
+            $rawMethods = [];
+            foreach (is_array($s['contact_methods'] ?? null) ? $s['contact_methods'] : [] as $row) {
+                if (is_array($row) && !empty($row['key'])) {
+                    $rawMethods[strtolower((string) $row['key'])] = $row;
+                }
+            }
+
+            $methods = [];
+            foreach ($methodDefinitions as $definition) {
+                $row = $rawMethods[$definition['key']] ?? [];
+                if (!is_array($row)) {
+                    $row = [];
+                }
+
+                $enabled = filter_var($row['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                $enabled = $enabled ?? false;
+                $value = trim((string) ($row['value'] ?? ''));
+                $url = trim((string) ($row['url'] ?? ''));
+                $resolvedUrl = $this->buildContactMethodUrl($definition['key'], $value, $url);
+
+                $methods[] = [
+                    'key' => $definition['key'],
+                    'label' => $definition['label'],
+                    'value' => $value,
+                    'url' => $resolvedUrl,
+                    'enabled' => $enabled,
+                ];
+            }
+
+            $content[$locale] = [
+                'page_title' => trim((string) ($s['page_title'] ?? '')) ?: $defaults['page_title'],
+                'page_intro' => trim((string) ($s['page_intro'] ?? '')) ?: $defaults['page_intro'],
+                'contact_info_title' => trim((string) ($s['contact_info_title'] ?? '')) ?: $defaults['contact_info_title'],
+                'confirm_open' => trim((string) ($s['confirm_open'] ?? '')) ?: $defaults['confirm_open'],
+                'address' => trim((string) ($s['address'] ?? '')) ?: $defaults['address'],
+                'phone' => trim((string) ($s['phone'] ?? '')) ?: $defaults['phone'],
+                'email' => trim((string) ($s['email'] ?? '')) ?: $defaults['email'],
+                'office_hours' => trim((string) ($s['office_hours'] ?? '')) ?: $defaults['office_hours'],
+                'form_title' => trim((string) ($s['form_title'] ?? '')) ?: $defaults['form_title'],
+                'form_subtitle' => trim((string) ($s['form_subtitle'] ?? '')) ?: $defaults['form_subtitle'],
+                'success_message' => trim((string) ($s['success_message'] ?? '')) ?: $defaults['success_message'],
+                'target_email' => trim((string) ($s['target_email'] ?? '')) ?: $defaults['target_email'],
+                'labels' => [
+                    'full_name' => trim((string) ($labels['full_name'] ?? '')) ?: $defaults['labels']['full_name'],
+                    'email_address' => trim((string) ($labels['email_address'] ?? '')) ?: $defaults['labels']['email_address'],
+                    'message' => trim((string) ($labels['message'] ?? '')) ?: $defaults['labels']['message'],
+                    'send_message' => trim((string) ($labels['send_message'] ?? '')) ?: $defaults['labels']['send_message'],
+                ],
+                'placeholders' => [
+                    'full_name' => trim((string) ($placeholders['full_name'] ?? '')) ?: $defaults['placeholders']['full_name'],
+                    'email_address' => trim((string) ($placeholders['email_address'] ?? '')) ?: $defaults['placeholders']['email_address'],
+                    'message' => trim((string) ($placeholders['message'] ?? '')) ?: $defaults['placeholders']['message'],
+                ],
+                'messages' => [
+                    'no_methods' => trim((string) ($messages['no_methods'] ?? '')) ?: $defaults['messages']['no_methods'],
+                ],
+                'contact_methods' => $methods,
+            ];
+        }
+
+        $oldContent = $page->page_content ?? [];
+        $page->update(['page_content' => $content]);
+        AuditLogService::logEdit(
+            AuditLog::MODULE_PAGE,
+            $page->title . ' (Contact sections)',
+            ['page_content' => $oldContent],
+            ['page_content' => $content]
+        );
+    }
+
+    private function buildContactMethodUrl(string $key, string $value, string $url = ''): string
+    {
+        $key = strtolower(trim($key));
+        $value = trim($value);
+        $url = trim($url);
+
+        if ($url !== '') {
+            return $url;
+        }
+
+        if ($value === '') {
+            return '';
+        }
+
+        return match ($key) {
+            'email' => filter_var($value, FILTER_VALIDATE_EMAIL) ? 'mailto:' . $value : '',
+            'phone' => 'tel:' . preg_replace('/[^0-9+]/', '', $value),
+            'whatsapp' => 'https://wa.me/' . preg_replace('/\D+/', '', $value),
+            'telegram' => 'https://t.me/' . ltrim(preg_replace('#^https?://t\.me/#i', '', $value), '@'),
+            'signal' => 'https://signal.me/#p/' . preg_replace('/\s+/', '', $value),
+            'teams' => Str::startsWith($value, ['http://', 'https://']) ? $value : 'https://teams.microsoft.com/l/chat/0/0?users=' . urlencode($value),
+            'wechat' => Str::startsWith($value, ['http://', 'https://']) ? $value : 'weixin://dl/chat?'.urlencode($value),
+            'website', 'link', 'custom' => filter_var($value, FILTER_VALIDATE_URL) ? $value : '',
+            default => filter_var($value, FILTER_VALIDATE_URL) ? $value : '',
+        };
     }
 
     /**

@@ -69,7 +69,7 @@
                         @endforeach
                         <div class="form-group">
                             <label for="slug" class="form-label">Slug <span class="form-required">*</span></label>
-                            @php $slugLocked = in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product']); @endphp
+                            @php $slugLocked = in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'contact']); @endphp
                             @if ($slugLocked)
                                 <input type="hidden" name="slug" value="{{ old('slug', $page->slug) }}">
                                 <input type="text" id="slug" value="{{ old('slug', $page->slug) }}"
@@ -238,7 +238,7 @@
                     </div>
                 </div>
 
-                @if (!in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product']))
+                @if (!in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'contact']))
                    
                 @elseif (($pageType ?? $page->slug) === 'home')
                     <div class="edit-page-section">
@@ -333,6 +333,19 @@
                                     'localeName' => $info['name'] ?? $code,
                                     'localeData' => $pageContentByLocale[$code] ?? [],
                                     'product_partner_images' => $product_partner_images ?? [],
+                                ])
+                            </div>
+                        @endforeach
+                    </div>
+                @elseif (($pageType ?? $page->slug) === 'contact')
+                    <div class="edit-page-section">
+                        @foreach ($locales ?? \App\Support\PageLocales::labels() as $code => $info)
+                            <div class="lang-panel {{ $loop->first ? 'active' : '' }}"
+                                id="lang-panel-contact-{{ $code }}" role="tabpanel">
+                                @include('admin.system-management.pages.partials.contact-sections', [
+                                    'locale' => $code,
+                                    'localeName' => $info['name'] ?? $code,
+                                    'localeData' => $pageContentByLocale[$code] ?? [],
                                 ])
                             </div>
                         @endforeach

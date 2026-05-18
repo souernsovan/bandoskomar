@@ -50,6 +50,21 @@ return [
             ],
         ],
 
+        'image-gallery' => [
+            'badge' => 'Public archive',
+            'title' => 'Image Gallery',
+            'subtitle' => 'Visual assets from the website',
+            'description' => 'Browse the photos, logos, and site graphics stored in public/images.',
+            'primary' => [
+                'label' => 'Our programs',
+                'route' => 'frontend.product',
+            ],
+            'secondary' => [
+                'label' => 'Contact us',
+                'route' => 'frontend.contact',
+            ],
+        ],
+
         'donate' => [
             'badge' => 'Support our work',
             'title' => 'Make a Difference Today',

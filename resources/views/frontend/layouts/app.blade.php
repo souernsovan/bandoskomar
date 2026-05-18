@@ -59,8 +59,9 @@
     <main class="fe-main">
         @php
             $showPageBanner = false;
+            $hidePageBanner = isset($hidePageBanner) ? (bool) $hidePageBanner : false;
 
-            if (isset($page) && $page) {
+            if (! $hidePageBanner && isset($page) && $page) {
                 if (property_exists($page, 'show_banner')) {
                     $showPageBanner = (bool) $page->show_banner;
                 } elseif (method_exists($page, 'shouldShowBanner')) {

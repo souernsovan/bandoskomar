@@ -30,6 +30,7 @@ class PageSeeder extends Seeder
             'strategic-plan',
             'partner',
             'volunteer',
+            'image-gallery',
             'image',
             'video',
             'contact',
@@ -367,27 +368,34 @@ class PageSeeder extends Seeder
                 'sort_order' => 11,
             ],
             [
-                'slug' => 'image',
+                'slug' => 'image-gallery',
                 'title' => 'Image Gallery',
-                'content' => 'Photos and visual stories from our programs will appear here.',
-                'route_name' => 'frontend.page',
+                'content' => 'Browse the public image archive for photos, logos, and visual assets from the website.',
+                'route_name' => 'frontend.gallery',
                 'meta_title' => $siteName . ' | Image Gallery',
-                'meta_description' => 'Browse visual highlights from our community programs.',
+                'meta_description' => 'Browse the public image archive for photos, logos, and visual assets from the website.',
                 'og_tags' => [
                     'og_title' => $siteName . ' | Image Gallery',
-                    'og_description' => 'Browse visual highlights from our community programs.',
+                    'og_description' => 'Browse the public image archive for photos, logos, and visual assets from the website.',
                     'og_image' => $siteLogoUrl,
                     'og_type' => 'website',
                 ],
-                'canonical_url' => route('frontend.page', ['slug' => 'image']),
+                'canonical_url' => route('frontend.gallery'),
                 'structured_data' => [
                     '@context' => 'https://schema.org',
-                    '@type' => 'WebPage',
+                    '@type' => 'CollectionPage',
                     'name' => 'Image Gallery',
-                    'url' => route('frontend.page', ['slug' => 'image']),
-                    'description' => 'Photos and visual stories from our programs will appear here.',
+                    'url' => route('frontend.gallery'),
+                    'description' => 'Browse the public image archive for photos, logos, and visual assets from the website.',
                 ],
                 'sort_order' => 12,
+                'page_content' => $this->localizedContent([
+                    'hero_badge' => 'Public archive',
+                    'hero_title' => 'Image Gallery',
+                    'hero_subtitle' => 'Visual assets from the website',
+                    'hero_description' => 'Browse the public image archive for photos, logos, and visual assets stored under public/images.',
+                    'gallery_intro' => 'The gallery pulls directly from the live public/images directory so new files appear here automatically.',
+                ]),
             ],
             [
                 'slug' => 'video',
@@ -434,6 +442,78 @@ class PageSeeder extends Seeder
                     'description' => 'Get in touch for partnerships, volunteering, and support.',
                 ],
                 'sort_order' => 14,
+                'page_content' => $this->localizedContent([
+                    'page_title' => 'Contact Us',
+                    'page_intro' => 'We are here to help. Feel free to reach out through any of the channels below or send us a message directly.',
+                    'contact_info_title' => 'Contact Information',
+                    'confirm_open' => 'Open this contact method?',
+                    'address' => '123 Main Street, Phnom Penh, Cambodia',
+                    'phone' => '+855 23 123 456',
+                    'email' => 'info@bandoskomar.org',
+                    'office_hours' => 'Monday-Friday, 8:00-17:00 (ICT)',
+                    'form_title' => 'Send Us a Message',
+                    'form_subtitle' => 'Fill out the form below and we will get back to you as soon as possible.',
+                    'success_message' => 'Thank you! Your message has been sent and we will respond shortly.',
+                    'target_email' => 'info@bandoskomar.org',
+                    'labels' => [
+                        'full_name' => 'Full Name',
+                        'email_address' => 'Email Address',
+                        'message' => 'Message',
+                        'send_message' => 'Send Message',
+                    ],
+                    'placeholders' => [
+                        'full_name' => 'Your full name',
+                        'email_address' => 'you@example.com',
+                        'message' => 'How can we help you?',
+                    ],
+                    'messages' => [
+                        'no_methods' => 'No contact methods are available yet.',
+                    ],
+                    'contact_methods' => [
+                        [
+                            'key' => 'email',
+                            'label' => 'Email',
+                            'value' => 'info@bandoskomar.org',
+                            'url' => 'mailto:info@bandoskomar.org',
+                            'enabled' => true,
+                        ],
+                        [
+                            'key' => 'whatsapp',
+                            'label' => 'WhatsApp',
+                            'value' => '+85512345678',
+                            'url' => 'https://wa.me/85512345678',
+                            'enabled' => true,
+                        ],
+                        [
+                            'key' => 'telegram',
+                            'label' => 'Telegram',
+                            'value' => '@89engine_support',
+                            'url' => 'https://t.me/89engine_support',
+                            'enabled' => true,
+                        ],
+                        [
+                            'key' => 'signal',
+                            'label' => 'Signal',
+                            'value' => '+85512345678',
+                            'url' => 'https://signal.me/#p/+85512345678',
+                            'enabled' => true,
+                        ],
+                        [
+                            'key' => 'teams',
+                            'label' => 'Microsoft Teams',
+                            'value' => 'support@89engine.com',
+                            'url' => 'https://teams.microsoft.com/l/chat/0/0?users=support%4089engine.com',
+                            'enabled' => true,
+                        ],
+                        [
+                            'key' => 'wechat',
+                            'label' => 'WeChat',
+                            'value' => '89engine_support',
+                            'url' => 'weixin://dl/chat?89engine_support',
+                            'enabled' => false,
+                        ],
+                    ],
+                ]),
             ],
             [
                 'slug' => 'donate',
@@ -476,6 +556,12 @@ class PageSeeder extends Seeder
             );
         }
 
+        Page::where('slug', 'image')->update([
+            'is_active' => false,
+            'menu_group' => 'hidden',
+            'sitemap_include' => false,
+        ]);
+
         $this->command?->info('Website pages seeded successfully.');
     }
 
@@ -509,7 +595,8 @@ class PageSeeder extends Seeder
         return match ($slug) {
             'home', 'platform', 'about-us', 'product', 'history' => 'main',
             'jobs-announcement', 'annual-report', 'strategic-plan', 'partner' => 'resources',
-            'volunteer', 'image', 'video' => 'involved',
+            'volunteer', 'image-gallery', 'video' => 'involved',
+            'image' => 'hidden',
             'contact', 'donate' => 'hidden',
             default => 'more',
         };
