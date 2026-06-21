@@ -1,147 +1,171 @@
-@extends('frontend.layouts.app')
+    @extends('frontend.layouts.app')
 
 @section('content')
     @php
         $c = $page->getPageContentForLocale();
+        $toAssetUrl = function (?string $path, string $fallback = '') {
+            $path = is_string($path) ? trim($path) : '';
 
-        $resultsSubtitle = $c['results_subtitle'] ?? 'Community impact';
-        $resultsTitle = $c['results_title'] ?? 'How do we deliver meaningful results?';
-        $resultsDescription = $c['results_description'] ?? 'We build practical, transparent programs that focus on long-term support for people and communities.';
+            if ($path === '') {
+                return $fallback;
+            }
 
-        $differentSubtitle = $c['different_subtitle'] ?? 'Why we are different';
-        $differentTitle = $c['different_title'] ?? 'We work with people, not for them.';
-        $differentDescription = $c['different_description'] ?? 'Our approach is collaborative, local, and rooted in dignity. We listen first and act with care.';
-        $differentCheck = $c['different_check'] ?? 'Community-led support';
-        $differentImage = $c['different_image'] ?? '';
+            if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '//'])) {
+                return $path;
+            }
 
-        $promiseSubtitle = $c['promise_subtitle'] ?? 'Our promise';
-        $promiseTitle = $c['promise_title'] ?? 'We stay accountable to every family and donor.';
-        $promiseDescription = $c['promise_description'] ?? 'We keep our work simple, transparent, and focused on the real needs that matter most.';
-        $promiseCheck = $c['promise_check'] ?? 'Transparent reporting';
-        $promiseImage = $c['promise_image'] ?? '';
+            return asset($path);
+        };
 
-        $solutionsSubtitle = $c['solutions_subtitle'] ?? 'Our approach';
-        $solutionsTitle = $c['solutions_title'] ?? 'Programs designed for lasting change';
-        $solutionsDescription = $c['solutions_description'] ?? 'Each initiative is shaped to respond to community needs with practical support and local partnership.';
-        $solIcons = config('about_us_icons.solution_icons', []);
+        $missionTitle = $c['different_title'] ?? 'A community-first NGO with clear accountability';
+        $missionDescription = $c['different_description'] ?? 'We exist to strengthen education, family wellbeing, and emergency response through local partnerships and steady follow-through.';
+        $missionImage = $c['different_image'] ?? '';
+        $aboutStripImages = array_values(array_filter(is_array($c['about_strip_images'] ?? null) ? $c['about_strip_images'] : []));
+
+        $missionPrinciples = [
+            [
+                'title' => $c['mission_1_title'] ?? 'Mission',
+                'description' => $c['mission_1_description'] ?? 'Support children and families through education, health, and relief.',
+            ],
+            [
+                'title' => $c['mission_2_title'] ?? 'Vision',
+                'description' => $c['mission_2_description'] ?? 'Communities where people can learn, grow, and thrive with dignity.',
+            ],
+            [
+                'title' => $c['mission_3_title'] ?? 'Values',
+                'description' => $c['mission_3_description'] ?? 'Transparency, stewardship, dignity, and collaboration guide every decision.',
+            ],
+        ];
+
+        $approachTitle = $c['solutions_title'] ?? 'Programs designed for lasting change';
+        $approachDescription = $c['solutions_description'] ?? 'Each initiative is shaped to respond to community needs with practical support and local partnership.';
         $solutionCards = $c['solution_cards'] ?? [
-            ['title' => 'Education support', 'description' => 'Scholarships, school supplies, and learning support for children and youth.', 'icon' => 'sol_1'],
-            ['title' => 'Health outreach', 'description' => 'Health education, basic care, and referrals that make support easier to access.', 'icon' => 'sol_2'],
-            ['title' => 'Emergency relief', 'description' => 'Rapid help for families facing crisis, displacement, or urgent hardship.', 'icon' => 'sol_3'],
+            ['title' => 'Education support', 'description' => 'Scholarships, school supplies, and learning support for children and youth.', 'image' => ''],
+            ['title' => 'Health outreach', 'description' => 'Health education, basic care, and referrals that make support easier to access.', 'image' => ''],
+            ['title' => 'Emergency relief', 'description' => 'Rapid help for families facing crisis, displacement, or urgent hardship.', 'image' => ''],
         ];
 
-        $interestsTitle = $c['interests_title'] ?? 'Where support matters most';
-        $intIcons = config('about_us_icons.interest_icons', []);
+        $valuesTitle = $c['interests_title'] ?? 'Where support matters most';
         $interestCards = $c['interest_cards'] ?? [
-            ['title' => 'Meals and essentials', 'description' => 'Helping families access the things they need most, when they need them most.', 'icon' => 'int_1'],
-            ['title' => 'Youth mentoring', 'description' => 'Guidance, encouragement, and opportunities for young people to grow.', 'icon' => 'int_2'],
-            ['title' => 'Reports and transparency', 'description' => 'Clear reporting so supporters can see how the work is making a difference.', 'icon' => 'int_3'],
-            ['title' => 'Community partnerships', 'description' => 'Working side by side with local organizations to make support stronger.', 'icon' => 'int_4'],
-            ['title' => 'Volunteer care', 'description' => 'Equipping volunteers with simple, effective ways to help.', 'icon' => 'int_5'],
-            ['title' => 'Ongoing support', 'description' => 'Stay connected through regular updates, needs, and opportunities to serve.', 'icon' => 'int_6'],
+            ['title' => 'Meals and essentials', 'description' => 'Helping families access the things they need most, when they need them most.', 'image' => ''],
+            ['title' => 'Youth mentoring', 'description' => 'Guidance, encouragement, and opportunities for young people to grow.', 'image' => ''],
+            ['title' => 'Reports and transparency', 'description' => 'Clear reporting so supporters can see how the work is making a difference.', 'image' => ''],
+            ['title' => 'Community partnerships', 'description' => 'Working side by side with local organizations to make support stronger.', 'image' => ''],
+            ['title' => 'Volunteer care', 'description' => 'Equipping volunteers with simple, effective ways to help.', 'image' => ''],
+            ['title' => 'Ongoing support', 'description' => 'Stay connected through regular updates, needs, and opportunities to serve.', 'image' => ''],
         ];
 
-        $readyTitle = $c['ready_title'] ?? 'Ready to help build stronger communities?';
+        $ctaTitle = $c['ready_title'] ?? 'Support the work, share the story, or ask how to get involved.';
+        $ctaDescription = $c['ready_description'] ?? 'About Us is stronger when donors, volunteers, and partners move together with the communities we serve.';
     @endphp
 
     <div class="bg-white">
-       
+        <section class="bg-slate-50">
+            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
+                <div class="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                    <div class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-lg shadow-slate-900/5 lg:p-10">
+                        <p class="text-[0.7rem] font-black uppercase tracking-[0.35em] text-[#F68B1E]">Mission, vision, values</p>
+                        <h2 class="mt-4 text-3xl font-black tracking-tight text-[#1E2D53] sm:text-4xl">
+                            {{ $missionTitle }}
+                        </h2>
+                        <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                            {{ $missionDescription }}
+                        </p>
+                        
+                        <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                            @foreach ($missionPrinciples as $principle)
+                                <article class="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+                                    <div class="inline-flex rounded-full bg-[#1E2D53]/10 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.35em] text-[#1E2D53]">
+                                        {{ $principle['title'] }}
+                                    </div>
+                                    <p class="mt-3 text-sm leading-6 text-slate-600">{{ $principle['description'] }}</p>
+                                </article>
+                            @endforeach
+                        </div>
+                    </div>
 
-        <section class="bg-white">
-            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-                <div class="max-w-3xl">
-                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">{{ $resultsSubtitle }}</p>
-                    <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                        {{ $resultsTitle }}
-                    </h2>
-                    <p class="mt-4 text-base leading-7 text-slate-600">
-                        {{ $resultsDescription }}
-                    </p>
+                    <div class="relative">
+                        <div class="absolute -top-6 right-8 h-24 w-24 rounded-full bg-[#F68B1E]/10"></div>
+                        @if (!empty($missionImage))
+                            <img src="{{ $toAssetUrl($missionImage) }}" alt="{{ $missionTitle }}" class="relative z-10 w-full rounded-[2rem] object-cover shadow-2xl shadow-slate-900/10">
+                        @else
+                            <div class="relative z-10 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
+                                <div class="bg-[#1E2D53] px-6 py-5 text-white">
+                                    <p class="text-[0.65rem] font-black uppercase tracking-[0.35em] text-[#F68B1E]">Our promise</p>
+                                    <p class="mt-3 text-xl font-black leading-snug sm:text-2xl">
+                                        We keep support visible, accountable, and close to the people it serves.
+                                    </p>
+                                </div>
+                                <div class="grid gap-4 p-6 sm:grid-cols-2">
+                                    <div class="rounded-[1.5rem] bg-slate-50 p-5">
+                                        <p class="text-sm font-black text-[#1E2D53]">Listen first</p>
+                                        <p class="mt-2 text-sm leading-6 text-slate-600">Local voices help shape every response.</p>
+                                    </div>
+                                    <div class="rounded-[1.5rem] bg-slate-50 p-5">
+                                        <p class="text-sm font-black text-[#1E2D53]">Act clearly</p>
+                                        <p class="mt-2 text-sm leading-6 text-slate-600">Simple action is easier to understand and trust.</p>
+                                    </div>
+                                    <div class="rounded-[1.5rem] bg-slate-50 p-5">
+                                        <p class="text-sm font-black text-[#1E2D53]">Report honestly</p>
+                                        <p class="mt-2 text-sm leading-6 text-slate-600">We show what happened and what changed.</p>
+                                    </div>
+                                    <div class="rounded-[1.5rem] bg-slate-50 p-5">
+                                        <p class="text-sm font-black text-[#1E2D53]">Stay present</p>
+                                        <p class="mt-2 text-sm leading-6 text-slate-600">Our work continues beyond one-off campaigns.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section class="bg-slate-50">
-            <div class="mx-auto grid max-w-7xl gap-8 px-6 py-16 lg:grid-cols-2 lg:px-8">
-                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-lg shadow-teal-900/5">
-                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">{{ $differentSubtitle }}</p>
-                    <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900">{{ $differentTitle }}</h2>
-                    <p class="mt-4 text-base leading-7 text-slate-600">
-                        {{ $differentDescription }}
-                    </p>
-                    <div class="mt-6 inline-flex items-center gap-3 rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800">
-                        <span aria-hidden="true">✓</span>
-                        {{ $differentCheck }}
-                    </div>
-                    @if (!empty($differentImage))
-                        <img src="{{ asset($differentImage) }}" alt="{{ $differentTitle }}" class="mt-8 w-full rounded-3xl object-cover">
-                    @else
-                        <div class="mt-8 rounded-3xl bg-slate-50 p-6 text-sm leading-6 text-slate-600">
-                            Community-first work means the people who know the need best help shape the solution.
+        @if (!empty($aboutStripImages))
+            <section class="bg-white">
+                <div class="w-full py-8 lg:py-12">
+                    <div class="overflow-hidden border-y border-slate-200 bg-white">
+                        <div class="grid grid-cols-2 gap-0 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5">
+                        @foreach (array_slice($aboutStripImages, 0, 5) as $stripImage)
+                            <div class="overflow-hidden border-b border-r border-slate-200 bg-slate-100">
+                                <img src="{{ $toAssetUrl($stripImage) }}" alt="About page image {{ $loop->iteration }}" class="h-52 w-full object-cover sm:h-60 lg:h-72 xl:h-80" loading="lazy">
+                            </div>
+                        @endforeach
                         </div>
-                    @endif
-                </article>
-
-                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-8 shadow-lg shadow-teal-900/5">
-                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">{{ $promiseSubtitle }}</p>
-                    <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900">{{ $promiseTitle }}</h2>
-                    <p class="mt-4 text-base leading-7 text-slate-600">
-                        {{ $promiseDescription }}
-                    </p>
-                    <div class="mt-6 inline-flex items-center gap-3 rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800">
-                        <span aria-hidden="true">✓</span>
-                        {{ $promiseCheck }}
                     </div>
-                    @if (!empty($promiseImage))
-                        <img src="{{ asset($promiseImage) }}" alt="{{ $promiseTitle }}" class="mt-8 w-full rounded-3xl object-cover">
-                    @else
-                        <div class="mt-8 grid gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl bg-slate-50 p-5">
-                                <p class="text-sm font-semibold text-slate-900">Stewardship</p>
-                                <p class="mt-2 text-sm leading-6 text-slate-600">We keep support focused and transparent.</p>
-                            </div>
-                            <div class="rounded-2xl bg-slate-50 p-5">
-                                <p class="text-sm font-semibold text-slate-900">Consistency</p>
-                                <p class="mt-2 text-sm leading-6 text-slate-600">We stay present beyond one-off campaigns.</p>
-                            </div>
-                            <div class="rounded-2xl bg-slate-50 p-5">
-                                <p class="text-sm font-semibold text-slate-900">Respect</p>
-                                <p class="mt-2 text-sm leading-6 text-slate-600">Every family is treated with dignity.</p>
-                            </div>
-                            <div class="rounded-2xl bg-slate-50 p-5">
-                                <p class="text-sm font-semibold text-slate-900">Partnership</p>
-                                <p class="mt-2 text-sm leading-6 text-slate-600">We collaborate with local leaders and donors.</p>
-                            </div>
-                        </div>
-                    @endif
-                </article>
-            </div>
-        </section>
+                </div>
+            </section>
+        @endif
 
         <section class="bg-white">
-            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
                 <div class="max-w-3xl">
-                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">{{ $solutionsSubtitle }}</p>
-                    <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                        {{ $solutionsTitle }}
+                    <p class="text-xs font-black uppercase tracking-[0.35em] text-[#F68B1E]">{{ $valuesTitle }}</p>
+                    <h2 class="mt-4 text-3xl font-black tracking-tight text-[#1E2D53] sm:text-4xl lg:text-5xl">
+                        Programs shaped for practical impact
                     </h2>
                     <p class="mt-4 text-base leading-7 text-slate-600">
-                        {{ $solutionsDescription }}
+                        {{ $approachDescription }}
                     </p>
                 </div>
 
                 <div class="mt-10 grid gap-6 md:grid-cols-3">
                     @foreach ($solutionCards as $card)
-                        @php
-                            $iconKey = $card['icon'] ?? 'sol_1';
-                            $iconSvg = $solIcons[$iconKey]['svg'] ?? '';
-                        @endphp
-                        <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-                            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-teal-700 shadow-sm">
-                                {!! $iconSvg !!}
+                        @php $cardImage = $card['image'] ?? ''; @endphp
+                        <article class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                            <div class="aspect-[16/11] bg-slate-100">
+                                @if (!empty($cardImage))
+                                    <img src="{{ $toAssetUrl($cardImage) }}" alt="{{ $card['title'] ?? '' }}" class="h-full w-full object-cover">
+                                @else
+                                    <div class="flex h-full items-center justify-center bg-gradient-to-br from-[#1E2D53]/8 to-[#F68B1E]/12">
+                                        <span class="rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.35em] text-[#1E2D53]">Program</span>
+                                    </div>
+                                @endif
                             </div>
-                            <h3 class="mt-5 text-xl font-semibold text-slate-900">{{ $card['title'] ?? '' }}</h3>
-                            <p class="mt-3 text-sm leading-6 text-slate-600">{{ $card['description'] ?? '' }}</p>
+                            <div class="p-6">
+                                <h3 class="text-xl font-black text-[#1E2D53]">{{ $card['title'] ?? '' }}</h3>
+                                <p class="mt-3 text-sm leading-6 text-slate-600">{{ $card['description'] ?? '' }}</p>
+                            </div>
                         </article>
                     @endforeach
                 </div>
@@ -149,49 +173,60 @@
         </section>
 
         <section class="bg-slate-50">
-            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
                 <div class="max-w-3xl">
-                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">{{ $interestsTitle }}</p>
-                    <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                        We focus on the needs that matter most.
+                    <p class="text-xs font-black uppercase tracking-[0.35em] text-[#F68B1E]">{{ $valuesTitle }}</p>
+                    <h2 class="mt-4 text-3xl font-black tracking-tight text-[#1E2D53] sm:text-4xl lg:text-5xl">
+                        Where support matters most
                     </h2>
                 </div>
 
                 <div class="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($interestCards as $card)
-                        @php
-                            $iconKey = $card['icon'] ?? 'int_1';
-                            $iconSvg = $intIcons[$iconKey]['svg'] ?? '';
-                        @endphp
-                        <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
-                                {!! $iconSvg !!}
+                        @php $cardImage = $card['image'] ?? ''; @endphp
+                        <article class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                            <div class="aspect-[16/10] bg-slate-100">
+                                @if (!empty($cardImage))
+                                    <img src="{{ $toAssetUrl($cardImage) }}" alt="{{ $card['title'] ?? '' }}" class="h-full w-full object-cover">
+                                @else
+                                    <div class="flex h-full items-center justify-center bg-gradient-to-br from-[#1E2D53]/8 to-[#F68B1E]/12">
+                                        <div class="rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.35em] text-[#1E2D53]">
+                                            NGO
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
-                            <h3 class="mt-5 text-lg font-semibold text-slate-900">{{ $card['title'] ?? '' }}</h3>
+                            <div class="p-6">
+                            <h3 class="mt-5 text-lg font-black text-[#1E2D53]">{{ $card['title'] ?? '' }}</h3>
                             <p class="mt-3 text-sm leading-6 text-slate-600">{{ $card['description'] ?? '' }}</p>
+                            </div>
                         </article>
                     @endforeach
                 </div>
             </div>
         </section>
 
-        <section class="bg-white">
-            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-                <div class="rounded-[2rem] bg-teal-700 px-8 py-10 text-white shadow-2xl shadow-teal-900/15">
-                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-100">Next step</p>
-                    <h2 class="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-                        {{ $readyTitle }}
-                    </h2>
-                    <p class="mt-4 max-w-3xl text-sm leading-6 text-teal-50">
-                        Partner with us to help children, families, and neighbors thrive.
-                    </p>
-                    <div class="mt-8 flex flex-wrap gap-4">
-                        <a href="{{ route('frontend.product') }}" class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-50">
-                            View programs
-                        </a>
-                        <a href="mailto:info@example.org" class="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-                            Contact us
-                        </a>
+        <section class="bg-[#1E2D53] text-white">
+            <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
+                <div class="rounded-[2.5rem] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-slate-900/20 lg:p-10">
+                    <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                        <div>
+                            <p class="text-[0.7rem] font-black uppercase tracking-[0.35em] text-[#F68B1E]">Next step</p>
+                            <h2 class="mt-4 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                                {{ $ctaTitle }}
+                            </h2>
+                            <p class="mt-5 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+                                {{ $ctaDescription }}
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap gap-4 lg:justify-end lg:items-start">
+                            <a href="{{ route('frontend.product') }}" class="rounded-full bg-[#F68B1E] px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-900/20 transition hover:bg-[#e27c14]">
+                                View programs
+                            </a>
+                            <a href="{{ route('frontend.contact') }}" class="rounded-full border border-white/25 px-7 py-3.5 text-sm font-bold text-white transition hover:bg-white/10">
+                                Contact us
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

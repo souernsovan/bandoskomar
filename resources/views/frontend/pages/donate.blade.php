@@ -110,23 +110,4 @@
             </div>
         </div>
     </section>
-
-    <section class="bg-teal-700 text-white">
-        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div class="max-w-3xl">
-                <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-100">{{ $ctaTitle }}</p>
-                <h2 class="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-                    {{ $ctaDescription }}
-                </h2>
-            </div>
-            <div class="mt-8 flex flex-wrap gap-4">
-                <a href="mailto:donate@bandoskomar.org" class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-50">
-                    {{ $donateButton }}
-                </a>
-                <a href="{{ route('frontend.contact') }}" class="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-                    Contact us
-                </a>
-            </div>
-        </div>
-    </section>
 @endsection

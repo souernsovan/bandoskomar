@@ -16,6 +16,8 @@ class AuditLogFormatter
         'hero_headline' => 'Hero headline',
         'hero_description' => 'Hero description',
         'hero_image' => 'Hero image',
+        'banner_title' => 'Banner title',
+        'banner_description' => 'Banner description',
         'company_title' => 'Company title',
         'company_description' => 'Company description',
         'company_logo' => 'Company logo',
@@ -32,6 +34,25 @@ class AuditLogFormatter
         'mobile_title' => 'Mobile section title',
         'mobile_image' => 'Mobile image',
         'mobile_bg' => 'Mobile background',
+        'impact_feature_label' => 'Impact feature label',
+        'impact_feature_1_title' => 'Impact feature 1 title',
+        'impact_feature_1_desc' => 'Impact feature 1 description',
+        'impact_feature_2_title' => 'Impact feature 2 title',
+        'impact_feature_2_desc' => 'Impact feature 2 description',
+        'impact_feature_3_title' => 'Impact feature 3 title',
+        'impact_feature_3_desc' => 'Impact feature 3 description',
+        'trust_subtitle' => 'Trust section subtitle',
+        'trust_title' => 'Trust section title',
+        'trust_description' => 'Trust section description',
+        'trust_step_1_title' => 'Trust step 1 title',
+        'trust_step_1_desc' => 'Trust step 1 description',
+        'trust_step_2_title' => 'Trust step 2 title',
+        'trust_step_2_desc' => 'Trust step 2 description',
+        'trust_step_3_title' => 'Trust step 3 title',
+        'trust_step_3_desc' => 'Trust step 3 description',
+        'trust_image' => 'Trust image',
+        'trust_quote_label' => 'Trust quote label',
+        'trust_quote_text' => 'Trust quote text',
         'style_title' => 'Style section title',
         'partners_title' => 'Partners section title',
         'features_title' => 'Features heading',
@@ -51,6 +72,12 @@ class AuditLogFormatter
         'different_description' => 'Different section description',
         'different_check' => 'Different section highlight',
         'different_image' => 'Different section image',
+        'mission_1_title' => 'Mission card 1 title',
+        'mission_1_description' => 'Mission card 1 description',
+        'mission_2_title' => 'Mission card 2 title',
+        'mission_2_description' => 'Mission card 2 description',
+        'mission_3_title' => 'Mission card 3 title',
+        'mission_3_description' => 'Mission card 3 description',
         'promise_subtitle' => 'Promise section subtitle',
         'promise_title' => 'Promise section heading',
         'promise_description' => 'Promise section description',
@@ -61,6 +88,7 @@ class AuditLogFormatter
         'solutions_description' => 'Solutions description',
         'interests_title' => 'Interests heading',
         'ready_title' => 'CTA heading',
+        'ready_description' => 'CTA description',
         'features' => 'Platform features list',
         'partner_images' => 'Partner logos',
         'styles' => 'Style Showcase',
@@ -70,7 +98,7 @@ class AuditLogFormatter
     /** Keys that store image paths (single path or array of paths) */
     private static array $imageKeys = [
         'platform_image', 'platform_slider_images', 'choose_col_1_image', 'hero_image', 'company_logo',
-        'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg',
+        'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg', 'trust_image',
         'different_image', 'promise_image', 'og_image', 'image',
         'partner_images',
     ];
@@ -162,19 +190,19 @@ class AuditLogFormatter
             ];
         }
 
-        // About Us solution_cards: [{title, description, icon}, ...]
+        // About Us solution_cards: [{title, description, image}, ...]
         if ($key === 'solution_cards' && is_array($value)) {
             return [
                 'formatted' => true,
-                'html' => self::formatCardList($value, 'title', 'description', 'icon'),
+                'html' => self::formatCardList($value, 'title', 'description', 'image'),
             ];
         }
 
-        // About Us interest_cards: [{title, description, icon}, ...]
+        // About Us interest_cards: [{title, description, image}, ...]
         if ($key === 'interest_cards' && is_array($value)) {
             return [
                 'formatted' => true,
-                'html' => self::formatCardList($value, 'title', 'description', 'icon'),
+                'html' => self::formatCardList($value, 'title', 'description', 'image'),
             ];
         }
 
@@ -340,7 +368,7 @@ class AuditLogFormatter
         return '<div class="audit-styles-formatted">' . implode('', $out) . '</div>';
     }
 
-    private static function formatCardList(array $items, string $titleKey, string $descKey, string $iconKey): string
+    private static function formatCardList(array $items, string $titleKey, string $descKey, ?string $mediaKey = null): string
     {
         if (empty($items)) {
             return '<span class="text-muted">(empty)</span>';
@@ -355,6 +383,9 @@ class AuditLogFormatter
             $title = trim($item[$titleKey] ?? '');
             $desc = trim($item[$descKey] ?? '');
             $line = '<span class="audit-feature-num">' . ($i + 1) . '.</span> ';
+            if ($mediaKey && !empty($item[$mediaKey]) && self::isImagePath((string) $item[$mediaKey])) {
+                $line .= self::formatImage((string) $item[$mediaKey], true) . ' ';
+            }
             $line .= $title ? '<strong>' . e($title) . '</strong>' : '<span class="text-muted">(no title)</span>';
             if ($desc) {
                 $line .= '<div class="audit-card-desc">' . e($desc) . '</div>';
@@ -472,10 +503,10 @@ class AuditLogFormatter
             $sections[] = '<div class="audit-section"><span class="audit-section-label">Platform features list</span>' . self::formatPlatformFeatures($content['features']) . '</div>';
         }
         if (isset($content['solution_cards']) && is_array($content['solution_cards'])) {
-            $sections[] = '<div class="audit-section"><span class="audit-section-label">Solution cards</span>' . self::formatCardList($content['solution_cards'], 'title', 'description', 'icon') . '</div>';
+            $sections[] = '<div class="audit-section"><span class="audit-section-label">Solution cards</span>' . self::formatCardList($content['solution_cards'], 'title', 'description', 'image') . '</div>';
         }
         if (isset($content['interest_cards']) && is_array($content['interest_cards'])) {
-            $sections[] = '<div class="audit-section"><span class="audit-section-label">Interest cards</span>' . self::formatCardList($content['interest_cards'], 'title', 'description', 'icon') . '</div>';
+            $sections[] = '<div class="audit-section"><span class="audit-section-label">Interest cards</span>' . self::formatCardList($content['interest_cards'], 'title', 'description', 'image') . '</div>';
         }
 
         // Styles (array of style objects with colors)

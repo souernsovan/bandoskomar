@@ -94,11 +94,11 @@
                 <div class="detail-grid form-grid-3">
                     <div class="detail-item">
                         <label>Created At</label>
-                        <p>{{ $product->created_at->format('F d, Y \a\t h:i A') }}</p>
+                        <p>{{ $product->created_at?->format('F d, Y \a\t h:i A') ?? '—' }}</p>
                     </div>
                     <div class="detail-item">
                         <label>Last Updated</label>
-                        <p>{{ $product->updated_at->format('F d, Y \a\t h:i A') }}</p>
+                        <p>{{ $product->updated_at?->format('F d, Y \a\t h:i A') ?? '—' }}</p>
                     </div>
                     <div class="detail-item">
                         <label>Program ID</label>

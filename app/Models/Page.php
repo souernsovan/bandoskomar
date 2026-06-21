@@ -122,7 +122,7 @@ class Page extends Model
         }
 
         return match ($this->slug) {
-            'home', 'platform', 'about-us', 'product', 'history' => 'main',
+            'home', 'about-us', 'product', 'history' => 'main',
             'jobs-announcement', 'annual-report', 'strategic-plan', 'partner' => 'resources',
             'volunteer', 'image-gallery', 'video' => 'involved',
             'image' => 'hidden',
@@ -145,7 +145,6 @@ class Page extends Model
     public function shouldShowBanner(): bool
     {
         return in_array($this->slug, [
-            'platform',
             'about-us',
             'product',
             'history',
@@ -179,7 +178,7 @@ class Page extends Model
      */
     public function getPageType(): ?string
     {
-        $special = ['home', 'platform', 'about-us', 'product', 'contact'];
+        $special = ['home', 'platform', 'about-us', 'product', 'contact', 'partner'];
         if (in_array($this->slug, $special, true)) {
             return $this->slug;
         }
@@ -207,6 +206,12 @@ class Page extends Model
         if (array_key_exists('solution_cards', $first)) {
             return 'about-us';
         }
+        if (array_key_exists('partner_feature_image', $first) || array_key_exists('partner_features', $first) || array_key_exists('supporters_title', $first)) {
+            return 'partner';
+        }
+        if (array_key_exists('partner_images', $first) || array_key_exists('partners_title', $first) || array_key_exists('partners_description', $first)) {
+            return 'partner';
+        }
         if (array_key_exists('products_title', $first) || array_key_exists('description', $first)) {
             return 'product';
         }
@@ -229,7 +234,24 @@ class Page extends Model
      */
     public static function getBySlug(string $slug): ?self
     {
-        return static::where('slug', $slug)->where('is_active', true)->first();
+        $page = static::where('slug', $slug)->where('is_active', true)->first();
+
+        if ($page !== null || $slug !== 'product') {
+            return $page;
+        }
+
+        $page = static::where('is_active', true)
+            ->where('route_name', 'frontend.product')
+            ->first();
+
+        if ($page !== null) {
+            return $page;
+        }
+
+        return static::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->first(fn (self $candidate) => $candidate->getPageType() === 'product');
     }
 
     /**
@@ -298,7 +320,6 @@ class Page extends Model
         $type = $this->getPageType() ?? $this->slug;
         return match ($type) {
             'home' => route('frontend.home'),
-            'platform' => route('frontend.platform'),
             'history' => route('frontend.history'),
             'product' => route('frontend.product'),
             'about-us' => route('frontend.about-us'),

@@ -1,0 +1,42 @@
+.git
+node_modules
+vendor
+
+.env
+.env.*
+!.env.example
+
+public/storage
+
+storage/app/*
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+*.sql
+*.sql.gz
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Stale preview assets and local-only image trees that are not referenced by
+# the current codebase or database dump. These are recreated/managed at runtime
+# when needed and they make the Railway upload much larger than necessary.
+public/images/homepage/
+public/images/platform/
+public/images/categories/
+public/images/home/Preview Themes Desktop & Mobile (Catalog Engine)/
+public/images/home/BG opct var 3.png
+public/images/home/hero-devices.png
+public/images/about-us/click-logo-69ae9a99f3763.png
+public/images/site/branding/
+public/images/avatars/sample-avatar.svg
+
+npm-debug.log
+yarn-error.log
+.DS_Store
+.idea
+.vscode

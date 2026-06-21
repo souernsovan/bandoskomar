@@ -60,11 +60,26 @@
                         </div>
                     </div>
                     <div class="style-item-body">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Program Title</label>
+                                <input type="text" class="form-input"
+                                    name="homepage_sections[_global][styles][{{ $si }}][title]"
+                                    value="{{ old("homepage_sections._global.styles.{$si}.title", $style['title'] ?? '') }}"
+                                    placeholder="Featured programs">
+                            </div>
+                            <div class="form-group full-width">
+                                <label class="form-label">Program Description</label>
+                                <textarea class="form-input form-textarea" rows="3"
+                                    name="homepage_sections[_global][styles][{{ $si }}][description]"
+                                    placeholder="Short description shown on the homepage card">{{ old("homepage_sections._global.styles.{$si}.description", $style['description'] ?? '') }}</textarea>
+                            </div>
+                        </div>
                         <div class="form-group" data-shared-image="style_{{ $si }}_image">
                             @include('admin.system-management.pages.partials.homepage-image-upload', [
                                 'name' => "homepage_sections[_global][style_{$si}_image_file]",
                                 'pathName' => "homepage_sections[_global][styles][{$si}][image]",
-                                'label' => 'Program Background Image',
+                                'label' => 'Program Image',
                                 'pathValue' => $style['image'] ?? '',
                                 'currentImageUrl' => $style['image'] ?? '',
                                 'pathOnly' => false,

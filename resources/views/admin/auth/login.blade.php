@@ -12,7 +12,12 @@
     <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800&display=swap" rel="stylesheet" />
     <link rel="icon" href="{{ asset(\App\Models\SiteSetting::siteIconPath()) }}" type="{{ \App\Models\SiteSetting::siteIconMimeType() }}">
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @php
+        $viteReady = file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'));
+    @endphp
+    @if ($viteReady)
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
 </head>
 
 <body class="login-page-centered">

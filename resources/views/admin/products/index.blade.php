@@ -159,7 +159,7 @@
                                     {{ ucfirst($product->status) }}
                                 </span>
                             </td>
-                            <td>{{ $product->created_at->format('M d, Y') }}</td>
+                            <td>{{ $product->created_at?->format('M d, Y') ?? '—' }}</td>
                             <td>
                                 <div class="action-buttons">
                                     @can('products.view')

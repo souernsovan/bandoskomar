@@ -49,7 +49,7 @@
                     <div class="detail-item">
                         <label>Date/Time</label>
                         <span class="datetime"
-                            data-iso="{{ $auditLog->created_at->toIso8601String() }}">{{ $auditLog->created_at->format('M d Y, h:i A') }}</span>
+                            data-iso="{{ $auditLog->created_at?->toIso8601String() ?? '' }}">{{ $auditLog->created_at?->format('M d Y, h:i A') ?? '—' }}</span>
                     </div>
                     <div class="detail-item">
                         <label>Created By</label>
@@ -253,12 +253,12 @@
                     <div class="detail-item">
                         <label>Created At</label>
                         <span class="datetime"
-                            data-iso="{{ $auditLog->created_at->toIso8601String() }}">{{ $auditLog->created_at->format('M d, Y \a\t h:i A') }}</span>
+                            data-iso="{{ $auditLog->created_at?->toIso8601String() ?? '' }}">{{ $auditLog->created_at?->format('M d, Y \a\t h:i A') ?? '—' }}</span>
                     </div>
                     <div class="detail-item">
                         <label>Last Updated</label>
                         <span class="datetime"
-                            data-iso="{{ $auditLog->updated_at->toIso8601String() }}">{{ $auditLog->updated_at->format('M d, Y \a\t h:i A') }}</span>
+                            data-iso="{{ $auditLog->updated_at?->toIso8601String() ?? '' }}">{{ $auditLog->updated_at?->format('M d, Y \a\t h:i A') ?? '—' }}</span>
                     </div>
                     <div class="detail-item">
                         <label>Audit Log ID</label>

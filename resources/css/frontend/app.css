@@ -138,10 +138,18 @@ body.fe-body {
 }
 
 .fe-header-nav {
-    margin-left: auto;
+    flex: 1;
+    min-width: 0;
+    margin-left: 0;
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .fe-header-nav-link {
@@ -245,7 +253,7 @@ body.fe-body {
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    margin-left: 0.35rem;
+    margin-left: 0.15rem;
     padding: 0.8rem 1.35rem;
     border: 1px solid transparent;
     border-radius: 9999px;
@@ -258,6 +266,14 @@ body.fe-body {
     cursor: pointer;
     transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 12px 24px rgba(255, 122, 24, 0.34);
+}
+
+.fe-header-donate-btn--desktop {
+    display: flex;
+}
+
+.fe-header-donate-btn--mobile {
+    display: none;
 }
 
 .fe-header-donate-btn:hover {
@@ -1891,6 +1907,14 @@ body.fe-nav-open .fe-main {
 
     .fe-header-donate-btn:hover {
         transform: none;
+    }
+
+    .fe-header-donate-btn--desktop {
+        display: none;
+    }
+
+    .fe-header-donate-btn--mobile {
+        display: flex;
     }
 
     .fe-header-logo-img {

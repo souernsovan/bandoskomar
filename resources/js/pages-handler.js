@@ -200,8 +200,18 @@ class PagesHandler {
             '</div>' +
             '</div>' +
             '<div class="style-item-body">' +
+            '<div class="form-grid">' +
             '<div class="form-group">' +
-            '<label class="form-label">Style Background Image</label>' +
+            '<label class="form-label">Program Title</label>' +
+            '<input type="text" class="form-input" name="homepage_sections[' + locale + '][styles][' + si + '][title]" value="" placeholder="Featured programs">' +
+            '</div>' +
+            '<div class="form-group full-width">' +
+            '<label class="form-label">Program Description</label>' +
+            '<textarea class="form-input form-textarea" rows="3" name="homepage_sections[' + locale + '][styles][' + si + '][description]" placeholder="Short description shown on the homepage card"></textarea>' +
+            '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+            '<label class="form-label">Program Image</label>' +
             '<div class="image-upload-wrapper homepage-image-upload">' +
             '<div class="image-drop-zone" data-drop-zone>' +
             '<input type="file" name="homepage_sections[' + locale + '][style_' + si +

@@ -24,22 +24,22 @@
 <div class="homepage-section-card">
     <h4 class="homepage-section-heading"><span class="homepage-section-num">1</span> Description ({{ $localeName }})</h4>
     <div class="form-group full-width">
-        <label class="form-label">Programs Page Description</label>
+        <label class="form-label">Programs intro text</label>
         <textarea name="{{ $n('description') }}" rows="6"
             class="form-input form-textarea @error('product_sections.*.description') error @enderror">{{ old($n('description'), $v('description')) }}</textarea>
-        <small class="form-hint">Main intro text displayed above the product grid.</small>
+        <small class="form-hint">Shown below the banner and above the program cards.</small>
     </div>
 </div>
 
 <div class="homepage-section-card">
-    <h4 class="homepage-section-heading"><span class="homepage-section-num">2</span> Programs ({{ $localeName }})</h4>
+    <h4 class="homepage-section-heading"><span class="homepage-section-num">2</span> Programs header ({{ $localeName }})</h4>
     <div class="form-group full-width">
-        <label for="product_sections_{{ $locale }}_products_title" class="form-label">Programs Section Title</label>
+        <label for="product_sections_{{ $locale }}_products_title" class="form-label">Programs section title</label>
         <input type="text" name="{{ $n('products_title') }}" id="product_sections_{{ $locale }}_products_title"
             class="form-input @error('product_sections.*.products_title') error @enderror"
             value="{{ old($n('products_title'), $v('products_title', 'Our Programs')) }}"
             placeholder="Our Programs">
-        <small class="form-hint">Title displayed above the program grid for this language.</small>
+        <small class="form-hint">Used as the main heading for the Programs page.</small>
         @error('product_sections.*.products_title')
             <span class="form-error">{{ $message }}</span>
         @enderror
@@ -47,12 +47,75 @@
 </div>
 
 <div class="homepage-section-card">
-    <h4 class="homepage-section-heading"><span class="homepage-section-num">3</span> Supporters ({{ $localeName }})</h4>
+    <h4 class="homepage-section-heading"><span class="homepage-section-num">3</span> Impact areas section ({{ $localeName }})</h4>
     <div class="form-grid">
         <div class="form-group full-width">
-            <label class="form-label">Supporters Title</label>
+            <label class="form-label">Feature section title</label>
+            <input type="text" name="{{ $n('feature_section_title') }}" class="form-input"
+                value="{{ old($n('feature_section_title'), $v('feature_section_title', 'Impact areas')) }}"
+                placeholder="Impact areas">
+        </div>
+        <div class="form-group full-width">
+            <label class="form-label">Feature section description</label>
+            <textarea name="{{ $n('feature_section_description') }}" rows="3"
+                class="form-input form-textarea">{{ old($n('feature_section_description'), $v('feature_section_description', 'Programs are designed around practical action, local accountability, and visible results.')) }}</textarea>
+        </div>
+    </div>
+    @php
+    $featureCards = $v('feature_cards', [
+        ['title' => 'Education', 'description' => 'School support, learning, and access.', 'image' => ''],
+        ['title' => 'Health', 'description' => 'Outreach, referrals, and basic care.', 'image' => ''],
+        ['title' => 'Relief', 'description' => 'Rapid support during urgent hardship.', 'image' => ''],
+        ['title' => 'Partnership', 'description' => 'Local work with shared accountability.', 'image' => ''],
+    ]);
+    @endphp
+    <div class="form-grid">
+        @foreach ($featureCards as $i => $card)
+            @php
+                $featureTitleOldKey = "product_sections.$locale.feature_cards.$i.title";
+                $featureDescriptionOldKey = "product_sections.$locale.feature_cards.$i.description";
+                $featureImageOldKey = "product_sections.$locale.feature_cards.$i.image";
+                $featureImageName = "product_sections[{$locale}][feature_cards][{$i}][image]";
+                $featureImageFileName = "product_sections[{$locale}][feature_cards][{$i}][image_file]";
+            @endphp
+            <div class="homepage-section-card" style="margin-top: 0;">
+                <h4 class="homepage-section-heading"><span class="homepage-section-num">{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span> Impact card {{ $i + 1 }}</h4>
+                <div class="form-group full-width">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="{{ $n('feature_cards') }}[{{ $i }}][title]" class="form-input"
+                        value="{{ old($featureTitleOldKey, $card['title'] ?? '') }}">
+                </div>
+                <div class="form-group full-width">
+                    @include('admin.system-management.pages.partials.homepage-image-upload', [
+                        'name' => $featureImageFileName,
+                        'pathName' => $featureImageName,
+                        'oldName' => $featureImageOldKey,
+                        'label' => 'Card image',
+                        'pathValue' => $card['image'] ?? '',
+                        'currentImageUrl' => $card['image'] ?? '',
+                        'uploadPath' => 'images/product-features',
+                        'sharedImageKey' => 'product_feature_card_' . ($i + 1) . '_image',
+                        'pathOnly' => $locale !== 'en',
+                        'hint' => 'Shown inside the impact card on the Programs page.',
+                    ])
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label">Description</label>
+                    <textarea name="{{ $n('feature_cards') }}[{{ $i }}][description]" rows="3" class="form-input form-textarea">{{ old($featureDescriptionOldKey, $card['description'] ?? '') }}</textarea>
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+
+<div class="homepage-section-card">
+    <h4 class="homepage-section-heading"><span class="homepage-section-num">4</span> Supporters strip ({{ $localeName }})</h4>
+    <div class="form-grid">
+        <div class="form-group full-width">
+            <label class="form-label">Supporters title</label>
             <input type="text" name="{{ $n('partners_title') }}" class="form-input"
                 value="{{ old($n('partners_title'), $v('partners_title', 'Our supporters')) }}">
+            <small class="form-hint">Shown above the supporter logos at the bottom of the page.</small>
         </div>
         <div class="form-group full-width">
             @include('admin.system-management.pages.partials.homepage-image-upload', [

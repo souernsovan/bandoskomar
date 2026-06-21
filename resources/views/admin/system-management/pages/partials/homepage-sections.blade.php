@@ -149,12 +149,115 @@
 </div>
 
 <div class="homepage-section-card">
-    <h4 class="homepage-section-heading"><span class="homepage-section-num">5</span> Impact Story ({{ $localeName }})</h4>
+    <h4 class="homepage-section-heading"><span class="homepage-section-num">5</span> Trust Section ({{ $localeName }})</h4>
+    <div class="form-grid">
+        <div class="form-group full-width">
+            <label class="form-label">Section Label</label>
+            <input type="text" name="{{ $n('trust_subtitle') }}" class="form-input"
+                value="{{ old($n('trust_subtitle'), $v('trust_subtitle', 'Built on trust')) }}">
+        </div>
+        <div class="form-group full-width">
+            <label class="form-label">Section Title</label>
+            <input type="text" name="{{ $n('trust_title') }}" class="form-input"
+                value="{{ old($n('trust_title'), $v('trust_title', 'Support that feels local, practical, and accountable.')) }}">
+        </div>
+        <div class="form-group full-width">
+            <label class="form-label">Section Description</label>
+            <textarea name="{{ $n('trust_description') }}" rows="3" class="form-input form-textarea">{{ old($n('trust_description'), $v('trust_description', 'NGO work is strongest when it stays close to the people it serves. We listen first, respond with simple action, and keep donors and partners informed along the way.')) }}</textarea>
+        </div>
+        <div class="form-group full-width">
+            @include('admin.system-management.pages.partials.homepage-image-upload', [
+                'name' => "homepage_sections[{$locale}][trust_image_file]",
+                'pathName' => "homepage_sections[{$locale}][trust_image]",
+                'label' => 'Trust Image',
+                'pathValue' => $v('trust_image', ''),
+                'currentImageUrl' => $v('trust_image'),
+                'pathOnly' => false,
+                'uploadPath' => 'images/homepage',
+                'sharedImageKey' => 'trust_image',
+            ])
+        </div>
+    </div>
+
+    <div class="form-grid form-grid-3">
+        <div class="form-group">
+            <label class="form-label">Step 1 Title</label>
+            <input type="text" name="{{ $n('trust_step_1_title') }}" class="form-input"
+                value="{{ old($n('trust_step_1_title'), $v('trust_step_1_title', 'Listen to the community')) }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Step 2 Title</label>
+            <input type="text" name="{{ $n('trust_step_2_title') }}" class="form-input"
+                value="{{ old($n('trust_step_2_title'), $v('trust_step_2_title', 'Act with purpose')) }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Step 3 Title</label>
+            <input type="text" name="{{ $n('trust_step_3_title') }}" class="form-input"
+                value="{{ old($n('trust_step_3_title'), $v('trust_step_3_title', 'Show the outcome')) }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Step 1 Description</label>
+            <textarea name="{{ $n('trust_step_1_desc') }}" rows="2" class="form-input form-textarea">{{ old($n('trust_step_1_desc'), $v('trust_step_1_desc', 'We work with local families, schools, and leaders to understand what matters most.')) }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Step 2 Description</label>
+            <textarea name="{{ $n('trust_step_2_desc') }}" rows="2" class="form-input form-textarea">{{ old($n('trust_step_2_desc'), $v('trust_step_2_desc', 'Every program is designed to be useful, visible, and easy to support.')) }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Step 3 Description</label>
+            <textarea name="{{ $n('trust_step_3_desc') }}" rows="2" class="form-input form-textarea">{{ old($n('trust_step_3_desc'), $v('trust_step_3_desc', 'We keep the story transparent so people can see the impact of their help.')) }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Quote Label</label>
+            <input type="text" name="{{ $n('trust_quote_label') }}" class="form-input"
+                value="{{ old($n('trust_quote_label'), $v('trust_quote_label', 'Why it matters')) }}">
+        </div>
+        <div class="form-group full-width">
+            <label class="form-label">Quote Text</label>
+            <textarea name="{{ $n('trust_quote_text') }}" rows="2" class="form-input form-textarea">{{ old($n('trust_quote_text'), $v('trust_quote_text', 'Small, clear actions build trust, and trust makes long-term community support possible.')) }}</textarea>
+        </div>
+    </div>
+</div>
+
+<div class="homepage-section-card">
+    <h4 class="homepage-section-heading"><span class="homepage-section-num">6</span> Impact Story ({{ $localeName }})</h4>
     <div class="form-grid">
         <div class="form-group full-width">
             <label class="form-label">Story Title</label>
             <input type="text" name="{{ $n('mobile_title') }}" class="form-input"
                 value="{{ old($n('mobile_title'), $v('mobile_title', 'Impact in action')) }}">
+        </div>
+        <div class="form-group full-width">
+            <label class="form-label">Feature Label</label>
+            <input type="text" name="{{ $n('impact_feature_label') }}" class="form-input"
+                value="{{ old($n('impact_feature_label'), $v('impact_feature_label', 'What we focus on')) }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feature 1 Title</label>
+            <input type="text" name="{{ $n('impact_feature_1_title') }}" class="form-input"
+                value="{{ old($n('impact_feature_1_title'), $v('impact_feature_1_title', 'Community updates')) }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feature 2 Title</label>
+            <input type="text" name="{{ $n('impact_feature_2_title') }}" class="form-input"
+                value="{{ old($n('impact_feature_2_title'), $v('impact_feature_2_title', 'Transparent reporting')) }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feature 3 Title</label>
+            <input type="text" name="{{ $n('impact_feature_3_title') }}" class="form-input"
+                value="{{ old($n('impact_feature_3_title'), $v('impact_feature_3_title', 'Direct response')) }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feature 1 Description</label>
+            <textarea name="{{ $n('impact_feature_1_desc') }}" rows="2" class="form-input form-textarea">{{ old($n('impact_feature_1_desc'), $v('impact_feature_1_desc', 'Short, clear updates that show what is happening on the ground.')) }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feature 2 Description</label>
+            <textarea name="{{ $n('impact_feature_2_desc') }}" rows="2" class="form-input form-textarea">{{ old($n('impact_feature_2_desc'), $v('impact_feature_2_desc', 'Simple reporting that helps supporters understand the results.')) }}</textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Feature 3 Description</label>
+            <textarea name="{{ $n('impact_feature_3_desc') }}" rows="2" class="form-input form-textarea">{{ old($n('impact_feature_3_desc'), $v('impact_feature_3_desc', 'Fast action when families need practical help the most.')) }}</textarea>
         </div>
         <div class="form-group full-width">
             @include('admin.system-management.pages.partials.homepage-image-upload', [

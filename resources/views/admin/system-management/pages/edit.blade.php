@@ -21,12 +21,12 @@
 
     <div class="form-card">
         @php
-            $stagedUploadPageTypes = ['home', 'platform', 'product'];
+            $stagedUploadPageTypes = ['home', 'platform', 'about-us', 'product'];
             $useStagedMultiUpload = in_array($pageType ?? $page->slug ?? '', $stagedUploadPageTypes, true);
         @endphp
         <form action="{{ route('system-management.pages.update', $page) }}" method="POST"
             @if ($useStagedMultiUpload) data-staged-upload-url="{{ route('system-management.pages.staged-media', $page, false) }}" @endif
-            @if (in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product'])) enctype="multipart/form-data" @endif>
+            @if (in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'contact', 'history', 'donate', 'partner', 'volunteer', 'image-gallery', 'video-stories', 'annual-report', 'strategic-plan', 'jobs-announcement'])) enctype="multipart/form-data" @endif>
             @csrf
             @method('PUT')
 
@@ -69,7 +69,7 @@
                         @endforeach
                         <div class="form-group">
                             <label for="slug" class="form-label">Slug <span class="form-required">*</span></label>
-                            @php $slugLocked = in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'contact']); @endphp
+                            @php $slugLocked = in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'partner', 'contact']); @endphp
                             @if ($slugLocked)
                                 <input type="hidden" name="slug" value="{{ old('slug', $page->slug) }}">
                                 <input type="text" id="slug" value="{{ old('slug', $page->slug) }}"
@@ -164,6 +164,12 @@
                         </div>
                     </div>
 
+                    @include('admin.system-management.pages.partials.banner-section', [
+                        'bannerTitle' => $bannerTitle ?? '',
+                        'bannerDescription' => $bannerDescription ?? '',
+                        'bannerBackgroundImage' => $bannerBackgroundImage ?? '',
+                    ])
+
                     {{-- Open Graph (OG) Tags --}}
                     <div class="edit-page-section">
                         <h3 class="edit-section-title">
@@ -238,7 +244,7 @@
                     </div>
                 </div>
 
-                @if (!in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'contact']))
+                @if (!in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'partner', 'contact']))
                    
                 @elseif (($pageType ?? $page->slug) === 'home')
                     <div class="edit-page-section">
@@ -337,6 +343,20 @@
                             </div>
                         @endforeach
                     </div>
+                @elseif (($pageType ?? $page->slug) === 'partner')
+                    <div class="edit-page-section">
+                        @foreach ($locales ?? \App\Support\PageLocales::labels() as $code => $info)
+                            <div class="lang-panel {{ $loop->first ? 'active' : '' }}"
+                                id="lang-panel-partner-{{ $code }}" role="tabpanel">
+                                @include('admin.system-management.pages.partials.partner-sections', [
+                                    'locale' => $code,
+                                    'localeName' => $info['name'] ?? $code,
+                                    'localeData' => $pageContentByLocale[$code] ?? [],
+                                    'partner_page_images' => $partner_page_images ?? [],
+                                ])
+                            </div>
+                        @endforeach
+                    </div>
                 @elseif (($pageType ?? $page->slug) === 'contact')
                     <div class="edit-page-section">
                         @foreach ($locales ?? \App\Support\PageLocales::labels() as $code => $info)
@@ -369,3 +389,97 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+@if (($pageType ?? $page->slug) === 'home')
+<script>
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-add-style]');
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        event.stopPropagation();
+
+        const locale = button.getAttribute('data-locale') || '_global';
+        const list = document.getElementById('styleItemsList_' + locale);
+        const empty = document.getElementById('styleItemsEmpty_' + locale);
+        if (!list) {
+            return;
+        }
+        if (empty) {
+            empty.style.display = 'none';
+        }
+
+        const si = list.querySelectorAll('.style-item-card').length;
+        const styleNum = String(si + 1).padStart(2, '0');
+
+        const card = document.createElement('div');
+        card.className = 'style-item-card';
+        card.setAttribute('data-style-index', si);
+        card.innerHTML = `
+            <div class="style-item-header" data-toggle-style>
+                <span class="style-item-number">STYLE ${styleNum}</span>
+                <div class="style-item-header-actions">
+                    <button type="button" class="style-item-toggle-btn" data-toggle-style-btn title="Expand / Collapse">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+                    </button>
+                    <button type="button" class="style-item-delete-btn" data-delete-style title="Remove this style">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="style-item-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Program Title</label>
+                        <input type="text" class="form-input" name="homepage_sections[_global][styles][${si}][title]" value="" placeholder="Featured programs">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Program Description</label>
+                        <textarea class="form-input form-textarea" rows="3" name="homepage_sections[_global][styles][${si}][description]" placeholder="Short description shown on the homepage card"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Program Image</label>
+                    <div class="image-upload-wrapper homepage-image-upload">
+                        <div class="image-drop-zone" data-drop-zone>
+                            <input type="file" name="homepage_sections[_global][style_${si}_image_file]" class="image-file-input" data-file-input accept="image/jpeg,image/png,image/gif,image/webp">
+                            <input type="hidden" name="homepage_sections[_global][styles][${si}][image]" value="">
+                            <div class="drop-zone-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="drop-zone-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25z" /></svg>
+                                <span class="drop-zone-text">Drag & drop an image here</span>
+                                <span class="drop-zone-subtext">or click to browse</span>
+                                <span class="drop-zone-hint">JPEG, PNG, GIF, WebP • Max 10MB</span>
+                            </div>
+                            <div class="image-preview" data-preview></div>
+                            <button type="button" class="remove-image-btn" data-remove-btn style="display:none;" title="Remove image">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label class="form-label">Program Colors</label>
+                    <div class="style-color-items" data-color-list data-style-index="${si}" data-locale="_global"></div>
+                    <button type="button" class="btn btn-outline style-add-color-btn" data-add-color data-style-index="${si}" data-locale="_global">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        Add Color
+                    </button>
+                </div>
+            </div>
+        `;
+
+        list.appendChild(card);
+        if (window.pagesHandler && typeof window.pagesHandler.initStyleCard === 'function') {
+            window.pagesHandler.initStyleCard(card);
+        }
+        if (typeof initImageUploadForContainer === 'function') {
+            initImageUploadForContainer(card);
+        }
+    }, true);
+</script>
+@endif
+@endpush

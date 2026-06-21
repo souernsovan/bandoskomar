@@ -145,7 +145,7 @@
                     <tr>
                         <td class="td-number">{{ $auditLogs->firstItem() + $index }}</td>
                         <td>
-                            <span class="datetime date-cell" data-iso="{{ $firstLog->created_at->toIso8601String() }}" data-seconds="true">{{ $firstLog->created_at->format('M d, Y H:i:s') }}</span>
+                            <span class="datetime date-cell" data-iso="{{ $firstLog->created_at?->toIso8601String() ?? '' }}" data-seconds="true">{{ $firstLog->created_at?->format('M d, Y H:i:s') ?? '—' }}</span>
                         </td>
                         <td>
                             @if($firstLog->user)

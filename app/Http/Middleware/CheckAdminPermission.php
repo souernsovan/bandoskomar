@@ -3,12 +3,18 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Services\PermissionBootstrapper;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Spatie\Permission\Models\Role;
 
 class CheckAdminPermission
 {
+    public function __construct(private PermissionBootstrapper $permissionBootstrapper)
+    {
+    }
+
     /**
      * Route name to permission mapping.
      */
@@ -66,6 +72,11 @@ class CheckAdminPermission
             return $next($request);
         }
 
+        if ($user) {
+            $this->permissionBootstrapper->syncFromConfig();
+            $this->syncRoleFromColumn($user);
+        }
+
         $routeName = $request->route()?->getName();
         $permission = $this->routePermissions[$routeName] ?? null;
 
@@ -78,5 +89,34 @@ class CheckAdminPermission
         }
 
         return $next($request);
+    }
+
+    /**
+     * Keep the Spatie role assignment aligned with the user.role column.
+     * This lets existing production users keep the permissions that match
+     * their stored role, even if the role pivot was never synced.
+     */
+    private function syncRoleFromColumn(User $user): void
+    {
+        try {
+            $role = trim((string) ($user->role ?? ''));
+
+            if ($role === '' || $role === User::ROLE_SYSTEM) {
+                return;
+            }
+
+            if (! Role::query()
+                ->where('guard_name', 'web')
+                ->where('name', $role)
+                ->exists()) {
+                return;
+            }
+
+            if (! $user->hasRole($role)) {
+                $user->syncRoles([$role]);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

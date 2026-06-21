@@ -98,6 +98,11 @@
                 </div>
             </div>
 
+            @include('admin.system-management.pages.partials.banner-section', [
+                'bannerTitle' => old('banner_title', ''),
+                'bannerDescription' => old('banner_description', ''),
+            ])
+
             <div class="edit-page-section">
                 <h3 class="edit-section-title">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

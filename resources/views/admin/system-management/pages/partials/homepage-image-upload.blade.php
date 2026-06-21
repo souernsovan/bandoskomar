@@ -4,14 +4,19 @@
     $pathOnly = $pathOnly ?? false;
     $sharedImageKey = $sharedImageKey ?? null;
     $keepImagesName = $keepImagesName ?? 'homepage_keep_partner_images';
+    $fullCard = $fullCard ?? false;
+    $oldName = $oldName ?? ($pathName ?? null);
     $id = 'hp_' . preg_replace('/[^a-z0-9]/', '_', $name ?? $pathName ?? 'img');
     $wrapperClass = $multiple ? 'homepage-partners-upload' : 'homepage-image-upload';
+    if ($fullCard && !$multiple) {
+        $wrapperClass .= ' homepage-image-upload--full-card';
+    }
 @endphp
 <div class="form-group" @if($sharedImageKey) data-shared-image="{{ $sharedImageKey }}" @endif>
     <label class="form-label">{{ $label }}</label>
     @if (!$multiple && isset($pathName))
     <input type="text" name="{{ $pathName }}" class="form-input homepage-image-path-input @error($pathName) error @enderror"
-        value="{{ old($pathName, $pathValue ?? '') }}" placeholder="{{ $uploadPath ?? 'images/home/...' }}"
+        value="{{ old($oldName ?? $pathName, $pathValue ?? '') }}" placeholder="{{ $uploadPath ?? 'images/home/...' }}"
         data-path-input @if($sharedImageKey) data-shared-image="{{ $sharedImageKey }}" @endif
         style="display: none;">
     @endif
@@ -69,7 +74,7 @@
                 @if(!empty($currentImageUrl))
                     <div class="image-preview-item">
                         <img src="{{ asset($currentImageUrl) }}" alt="Current">
-                        <div class="image-preview-info">
+                        <div class="image-preview-info @if($fullCard) image-preview-info--compact @endif">
                             <span class="image-name">Current Image</span>
                             <span class="image-size">Uploaded</span>
                         </div>
@@ -95,6 +100,99 @@
         @enderror
     @endif
 </div>
+
+@if ($fullCard)
+@once
+<style>
+    .homepage-image-upload--full-card .image-drop-zone {
+        border-radius: 24px;
+        overflow: hidden;
+        min-height: 64px;
+        padding: 0;
+        background: #f8fafc;
+    }
+
+    .homepage-image-upload--full-card .image-drop-zone.has-file {
+        min-height: 240px;
+    }
+
+    .homepage-image-upload--full-card .drop-zone-content {
+        min-height: 64px;
+        padding: 0.35rem 0.6rem;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .homepage-image-upload--full-card .image-drop-zone.has-file .drop-zone-content {
+        min-height: 240px;
+    }
+
+    .homepage-image-upload--full-card .image-preview {
+        display: block;
+        width: 100%;
+        min-height: 240px;
+    }
+
+    .homepage-image-upload--full-card .image-preview-item {
+        position: relative;
+        display: block;
+        width: 100%;
+        min-height: 240px;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        overflow: hidden;
+    }
+
+    .homepage-image-upload--full-card .image-preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        min-height: 240px;
+        border-radius: 0;
+    }
+
+    .homepage-image-upload--full-card .image-preview-info {
+        display: none !important;
+    }
+
+    .homepage-image-upload--full-card .image-preview-item img {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .homepage-image-upload--full-card .drop-zone-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .homepage-image-upload--full-card .drop-zone-text {
+        font-size: 10px;
+    }
+
+    .homepage-image-upload--full-card .drop-zone-subtext {
+        font-size: 8px;
+    }
+
+    .homepage-image-upload--full-card .drop-zone-hint {
+        font-size: 7px;
+    }
+
+    .homepage-image-upload--full-card .image-preview-item,
+    .homepage-image-upload--full-card .image-preview {
+        border-radius: 0 !important;
+    }
+
+    .homepage-image-upload--full-card .remove-image-btn {
+        top: 1rem;
+        right: 1rem;
+        z-index: 5;
+    }
+</style>
+@endonce
+@endif
 
 @php
     $showCurrentPartners = $multiple && isset($currentImages) && is_array($currentImages) && count($currentImages) > 0;

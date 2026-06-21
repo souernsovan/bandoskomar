@@ -22,6 +22,10 @@ class PageController extends Controller
     {
         $page = Page::getBySlug($slug);
 
+        if (!$page && $slug === 'product') {
+            $page = $this->makeFallbackProductPage();
+        }
+
         if (!$page) {
             abort(404, 'Page not found');
         }
@@ -41,9 +45,25 @@ class PageController extends Controller
             $data = array_merge($data, [
                 'description' => $c['description'] ?? 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.',
                 'productsTitle' => $c['products_title'] ?? 'Our Programs',
+                'featureSectionTitle' => $c['feature_section_title'] ?? 'Impact areas',
+                'featureSectionDescription' => $c['feature_section_description'] ?? 'Programs are designed around practical action, local accountability, and visible results.',
+                'featureCards' => $this->normalizeProductFeatureCards($c['feature_cards'] ?? []),
                 'partnersTitle' => $c['partners_title'] ?? 'Our Supporters',
                 'partnerImages' => $partnerImages,
                 'products' => $products,
+            ]);
+        } elseif ($slug === 'partner') {
+            $c = $page->getPageContentForLocale();
+            $partnerImages = $c['partner_images'] ?? [];
+            $partnerImages = is_array($partnerImages) ? $partnerImages : [$partnerImages];
+            $data = array_merge($data, [
+                'partnerTitle' => $c['partners_title'] ?? 'How you can partner',
+                'partnerDescription' => $c['partners_description'] ?? 'We work with schools, donors, corporations, and NGOs to support education programs.',
+                'partnerFeatureImage' => $c['partner_feature_image'] ?? '',
+                'partnerFeatures' => $this->normalizePartnerFeatures($c['partner_features'] ?? []),
+                'supportersTitle' => $c['supporters_title'] ?? 'Our supporters',
+                'supportersDescription' => $c['supporters_description'] ?? 'Partners and organizations helping grow practical education and community support.',
+                'partnerImages' => $partnerImages,
             ]);
         } elseif ($slug === 'contact') {
             $data = array_merge($data, $this->buildContactPageData($page));
@@ -56,6 +76,63 @@ class PageController extends Controller
             view()->exists($view) ? $view : 'frontend.pages.default',
             $data
         );
+    }
+
+    /**
+     * Build a safe fallback page object for the public Programs page.
+     * This keeps /programs working even if the seeded page row is missing
+     * or was not deployed to production yet.
+     */
+    private function makeFallbackProductPage(): Page
+    {
+        $page = new Page();
+
+        $title = 'Our Programs';
+        $description = 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.';
+
+        $page->slug = 'product';
+        $page->title = $title;
+        $page->content = $description;
+        $page->route_name = 'frontend.product';
+        $page->meta_title = config('app.name') . ' | ' . $title;
+        $page->meta_description = $description;
+        $page->og_tags = [
+            'og_title' => config('app.name') . ' | ' . $title,
+            'og_description' => $description,
+            'og_type' => 'website',
+        ];
+        $page->canonical_url = route('frontend.product');
+        $page->structured_data = [
+            '@context' => 'https://schema.org',
+            '@type' => 'CollectionPage',
+            'name' => $title,
+            'url' => route('frontend.product'),
+            'description' => $description,
+        ];
+        $page->translations = [
+            'en' => [
+                'title' => $title,
+                'content' => $description,
+            ],
+        ];
+        $page->page_content = [
+            'en' => [
+                'description' => $description,
+                'products_title' => $title,
+                'feature_section_title' => 'Impact areas',
+                'feature_section_description' => 'Programs are designed around practical action, local accountability, and visible results.',
+                'feature_cards' => [
+                    ['title' => 'Education', 'description' => 'School support, learning, and access.', 'image' => ''],
+                    ['title' => 'Health', 'description' => 'Outreach, referrals, and basic care.', 'image' => ''],
+                    ['title' => 'Relief', 'description' => 'Rapid support during urgent hardship.', 'image' => ''],
+                    ['title' => 'Partnership', 'description' => 'Local work with shared accountability.', 'image' => ''],
+                ],
+                'partners_title' => 'Our supporters',
+                'partner_images' => [],
+            ],
+        ];
+
+        return $page;
     }
 
     /**
@@ -104,6 +181,9 @@ class PageController extends Controller
             'page' => $page,
             'description' => $category->description ?: ($c['description'] ?? 'Community programs grouped by area of focus.'),
             'productsTitle' => $c['products_title'] ?? 'Our Programs',
+            'featureSectionTitle' => $c['feature_section_title'] ?? 'Impact areas',
+            'featureSectionDescription' => $c['feature_section_description'] ?? 'Programs are designed around practical action, local accountability, and visible results.',
+            'featureCards' => $this->normalizeProductFeatureCards($c['feature_cards'] ?? []),
             'partnersTitle' => $c['partners_title'] ?? 'Our Supporters',
             'partnerImages' => $partnerImages,
             'products' => $products,
@@ -151,6 +231,47 @@ class PageController extends Controller
     public function gallery()
     {
         return $this->show('image-gallery');
+    }
+
+    private function normalizeProductFeatureCards(array $value): array
+    {
+        $defaults = [
+            ['title' => 'Education', 'description' => 'School support, learning, and access.', 'image' => ''],
+            ['title' => 'Health', 'description' => 'Outreach, referrals, and basic care.', 'image' => ''],
+            ['title' => 'Relief', 'description' => 'Rapid support during urgent hardship.', 'image' => ''],
+            ['title' => 'Partnership', 'description' => 'Local work with shared accountability.', 'image' => ''],
+        ];
+
+        $result = [];
+        for ($i = 0; $i < 4; $i++) {
+            $item = $value[$i] ?? $defaults[$i];
+            $result[] = [
+                'title' => is_array($item) ? ($item['title'] ?? $defaults[$i]['title']) : $defaults[$i]['title'],
+                'description' => is_array($item) ? ($item['description'] ?? $defaults[$i]['description']) : $defaults[$i]['description'],
+                'image' => is_array($item) ? ($item['image'] ?? $defaults[$i]['image']) : $defaults[$i]['image'],
+            ];
+        }
+
+        return $result;
+    }
+
+    private function normalizePartnerFeatures(array $value): array
+    {
+        $defaults = [
+            ['title' => 'Funding & grants', 'description' => 'Support programs, materials, teacher stipends, and infrastructure projects.'],
+            ['title' => 'In-kind expertise', 'description' => 'Offer training, curriculum resources, monitoring & evaluation, or tech support.'],
+        ];
+
+        $result = [];
+        for ($i = 0; $i < 2; $i++) {
+            $item = $value[$i] ?? $defaults[$i];
+            $result[] = [
+                'title' => is_array($item) ? ($item['title'] ?? $defaults[$i]['title']) : $defaults[$i]['title'],
+                'description' => is_array($item) ? ($item['description'] ?? $defaults[$i]['description']) : $defaults[$i]['description'],
+            ];
+        }
+
+        return $result;
     }
 
     /**

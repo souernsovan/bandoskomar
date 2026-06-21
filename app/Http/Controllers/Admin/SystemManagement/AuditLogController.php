@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AuditLogController extends Controller
 {
@@ -34,7 +35,7 @@ class AuditLogController extends Controller
                     $q->where('action_type', 'like', "%{$search}%")
                         ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%"));
-                    if (\DB::connection()->getDriverName() === 'mysql') {
+                    if (DB::connection()->getDriverName() === 'mysql') {
                         $q->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(new_value, '$.object_changed')) LIKE ?", ["%{$search}%"])
                             ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(new_value, '$.details')) LIKE ?", ["%{$search}%"])
                             ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(old_value, '$.object_changed')) LIKE ?", ["%{$search}%"]);
@@ -59,23 +60,26 @@ class AuditLogController extends Controller
             return $query;
         };
 
-        $matchingBatchIds = $applyFilters(AuditLog::query())
-            ->whereNotNull('batch_id')
-            ->distinct()
-            ->pluck('batch_id');
+        $rankedBatchLogs = $applyFilters(
+            AuditLog::query()
+                ->whereNotNull('batch_id')
+                ->select('audit_logs.*')
+                ->selectRaw('ROW_NUMBER() OVER (PARTITION BY batch_id ORDER BY created_at ASC, id ASC) as batch_rank')
+        );
 
-        $representativeQuery = AuditLog::query()->with('user')->where(function ($q) use ($applyFilters, $matchingBatchIds) {
+        $batchRepresentativeIds = DB::query()
+            ->fromSub($rankedBatchLogs, 'ranked_audit_logs')
+            ->where('batch_rank', 1)
+            ->pluck('id');
+
+        $representativeQuery = AuditLog::query()->with('user')->where(function ($q) use ($applyFilters, $batchRepresentativeIds) {
             $q->where(function ($q2) use ($applyFilters) {
                 $applyFilters($q2)->whereNull('batch_id');
-            })->orWhere(function ($q2) use ($matchingBatchIds) {
-                $q2->whereIn('batch_id', $matchingBatchIds)
-                    ->whereIn('audit_logs.id', function ($sub) {
-                        $sub->selectRaw('MIN(id)')
-                            ->from('audit_logs as al_rep')
-                            ->whereNotNull('al_rep.batch_id')
-                            ->groupBy('al_rep.batch_id');
-                    });
             });
+
+            if ($batchRepresentativeIds->isNotEmpty()) {
+                $q->orWhereIn('id', $batchRepresentativeIds->all());
+            }
         });
 
         $auditLogs = $representativeQuery->orderBy('created_at', 'desc')->paginate($perPage);

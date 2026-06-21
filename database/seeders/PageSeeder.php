@@ -19,9 +19,9 @@ class PageSeeder extends Seeder
         $siteLogoUrl = asset(SiteSetting::siteLogoPath());
         $currentMaxSortOrder = Page::max('sort_order') ?? 0;
         Page::where('slug', 'impact-areas')->delete();
+        Page::where('slug', 'platform')->delete();
         $targetSlugs = [
             'home',
-            'platform',
             'about-us',
             'product',
             'history',
@@ -96,52 +96,6 @@ class PageSeeder extends Seeder
                     'styles' => [],
                     'partners_title' => 'Our supporters',
                     'partner_images' => [],
-                ]),
-            ],
-            [
-                'slug' => 'platform',
-                'title' => 'Our Mission',
-                'content' => 'We work alongside communities to deliver education, care, and relief with dignity.',
-                'route_name' => 'frontend.platform',
-                'meta_title' => $siteName . ' | Our Mission',
-                'meta_description' => 'Learn how our mission centers on education, health, relief, and local partnership.',
-                'og_tags' => [
-                    'og_title' => $siteName . ' | Our Mission',
-                    'og_description' => 'Learn how our mission centers on education, health, relief, and local partnership.',
-                    'og_image' => $siteLogoUrl,
-                    'og_type' => 'website',
-                ],
-                'canonical_url' => route('frontend.platform'),
-                'structured_data' => [
-                    '@context' => 'https://schema.org',
-                    '@type' => 'WebPage',
-                    'name' => 'Our Mission',
-                    'url' => route('frontend.platform'),
-                    'description' => 'We work alongside communities to deliver education, care, and relief with dignity.',
-                ],
-                'sort_order' => 2,
-                'page_content' => $this->localizedContent([
-                    'profile_title' => 'Our Mission',
-                    'profile_tagline' => 'We work alongside communities to deliver education, care, and relief with dignity.',
-                    'platform_slider_images' => [],
-                    'platform_image' => '',
-                    'features_title' => 'What we do',
-                    'features_subtitle' => 'We invest in practical programs that address real needs, not short-term optics.',
-                    'features' => [
-                        ['title' => 'Education support for children and youth.', 'color' => 'blue', 'icon' => 'icon_3'],
-                        ['title' => 'Health outreach and family care.', 'color' => 'green', 'icon' => 'icon_11'],
-                        ['title' => 'Emergency relief when crisis hits.', 'color' => 'red', 'icon' => 'icon_5'],
-                        ['title' => 'Community partnerships with local leaders.', 'color' => 'purple', 'icon' => 'icon_7'],
-                        ['title' => 'Transparent reporting for donors.', 'color' => 'blue', 'icon' => 'icon_2'],
-                        ['title' => 'Volunteer coordination and training.', 'color' => 'green', 'icon' => 'icon_8'],
-                    ],
-                    'choose_title' => 'Why support our work?',
-                    'choose_col_1_text' => 'Supported by local partners',
-                    'choose_col_1_image' => '',
-                    'choose_col_2_text' => 'Community focus',
-                    'choose_col_2_value' => '24/7',
-                    'choose_col_3_text' => 'Program areas',
-                    'choose_col_3_value' => '3+',
                 ]),
             ],
             [
@@ -593,7 +547,7 @@ class PageSeeder extends Seeder
     private function menuGroupForSlug(string $slug): string
     {
         return match ($slug) {
-            'home', 'platform', 'about-us', 'product', 'history' => 'main',
+            'home', 'about-us', 'product', 'history' => 'main',
             'jobs-announcement', 'annual-report', 'strategic-plan', 'partner' => 'resources',
             'volunteer', 'image-gallery', 'video' => 'involved',
             'image' => 'hidden',

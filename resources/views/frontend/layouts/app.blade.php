@@ -51,7 +51,12 @@
     <script type="application/ld+json">{!! json_encode($page->structured_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @endif
 
-     @vite(['resources/css/frontend/app.css', 'resources/js/app.js'])
+    @php
+        $viteReady = file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'));
+    @endphp
+    @if ($viteReady)
+        @vite(['resources/css/frontend/app.css', 'resources/js/app.js'])
+    @endif
     @stack('head')
 </head>
 <body class="fe-body">

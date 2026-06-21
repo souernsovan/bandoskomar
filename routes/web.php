@@ -32,9 +32,6 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('frontend.
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('frontend.robots');
 
 Route::get('/', [HomeController::class, 'index'])->name('frontend.home');
-Route::get('/platform', function () {
-    return redirect()->route('frontend.platform');
-})->name('legacy.frontend.platform');
 Route::get('/product', function () {
     return redirect()->route('frontend.product');
 })->name('legacy.frontend.product');
@@ -44,7 +41,6 @@ Route::get('/product/{slug}', function (string $slug) {
 Route::get('/products/{product:slug}', function (App\Models\Product $product) {
     return redirect()->route('frontend.product.detail', ['product' => $product->slug], 301);
 })->name('legacy.frontend.product.detail');
-Route::get('/mission', fn () => app(FrontendPageController::class)->show('platform'))->name('frontend.platform');
 Route::get('/history', fn () => app(FrontendPageController::class)->show('history'))->name('frontend.history');
 Route::get('/programs', fn () => app(FrontendPageController::class)->show('product'))->name('frontend.product');
 Route::get('/programs/{slug}', [FrontendPageController::class, 'showProduct'])

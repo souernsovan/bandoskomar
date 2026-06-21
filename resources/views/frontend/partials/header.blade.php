@@ -126,9 +126,13 @@
                 Contact
             </a>
 
-            <a href="{{ route('frontend.donate') }}" class="fe-header-donate-btn {{ $isDonate ? 'is-active' : '' }}" data-fe-close-on-nav-click>
+            <a href="{{ route('frontend.donate') }}" class="fe-header-donate-btn fe-header-donate-btn--mobile {{ $isDonate ? 'is-active' : '' }}" data-fe-close-on-nav-click>
                 Donate
             </a>
         </nav>
+
+        <a href="{{ route('frontend.donate') }}" class="fe-header-donate-btn fe-header-donate-btn--desktop {{ $isDonate ? 'is-active' : '' }}" data-fe-close-on-nav-click>
+            Donate
+        </a>
     </div>
 </header>

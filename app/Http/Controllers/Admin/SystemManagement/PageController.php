@@ -58,6 +58,9 @@ class PageController extends Controller
             'slug' => ['required', 'string', 'max:255', 'unique:pages,slug'],
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
+            'banner_title' => ['nullable', 'string', 'max:255'],
+            'banner_description' => ['nullable', 'string'],
+            'background_image' => ['nullable', 'string', 'max:500'],
             'route_name' => ['nullable', 'string', 'max:255'],
             'menu_group' => ['nullable', 'string', Rule::in(array_keys(Page::MENU_GROUP_LABELS))],
             'is_active' => ['boolean'],
@@ -98,6 +101,14 @@ class PageController extends Controller
         $validated['translations'] = $this->buildTranslationsFromRequest($request);
         $validated['title'] = $validated['translations']['en']['title'] ?? $validated['title'];
         $validated['content'] = $validated['translations']['en']['content'] ?? $validated['content'] ?? null;
+        $bannerFields = $this->extractBannerFields($request);
+        $bannerFields['background_image'] = $this->storeBannerBackgroundImage(
+            $request,
+            $bannerFields['background_image'] ?? ''
+        );
+        if (!empty($bannerFields)) {
+            $validated['page_content'] = $bannerFields;
+        }
 
         $page = Page::create($validated);
 
@@ -124,6 +135,10 @@ class PageController extends Controller
         $data['locales'] = PageLocales::labels();
         $data['translations'] = $this->getTranslationsForEdit($page);
         $data['pageContentByLocale'] = $this->getPageContentByLocale($page, $pageType);
+        $bannerLocaleData = $page->getPageContentForLocale('en');
+        $data['bannerTitle'] = $bannerLocaleData['banner_title'] ?? '';
+        $data['bannerDescription'] = $bannerLocaleData['banner_description'] ?? '';
+        $data['bannerBackgroundImage'] = $bannerLocaleData['background_image'] ?? '';
 
         if ($pageType === 'platform') {
             $data['platform_feature_icons'] = config('platform_feature_icons.icons', []);
@@ -134,8 +149,6 @@ class PageController extends Controller
                 );
             }
         } elseif ($pageType === 'about-us') {
-            $data['about_us_solution_icons'] = config('about_us_icons.solution_icons', []);
-            $data['about_us_interest_icons'] = config('about_us_icons.interest_icons', []);
             $data['pageContentByLocale'] = $this->normalizeAboutUsSharedImages($data['pageContentByLocale']);
             foreach (PageLocales::all() as $locale) {
                 $data['pageContentByLocale'][$locale]['solution_cards'] = $this->normalizeAboutUsSolutionCards(
@@ -147,7 +160,22 @@ class PageController extends Controller
             }
         } elseif ($pageType === 'product') {
             $data['pageContentByLocale'] = $this->normalizeProductSharedImages($data['pageContentByLocale']);
+            foreach (PageLocales::all() as $locale) {
+                $data['pageContentByLocale'][$locale]['feature_cards'] = $this->normalizeProductFeatureCards(
+                    $data['pageContentByLocale'][$locale]['feature_cards'] ?? []
+                );
+            }
             $data['product_partner_images'] = $this->normalizePartnerImages(
+                $data['pageContentByLocale']['en']['partner_images'] ?? $data['pageContentByLocale'][array_key_first($data['pageContentByLocale'])]['partner_images'] ?? []
+            );
+        } elseif ($pageType === 'partner') {
+            $data['pageContentByLocale'] = $this->normalizePartnerSharedImages($data['pageContentByLocale']);
+            foreach (PageLocales::all() as $locale) {
+                $data['pageContentByLocale'][$locale]['partner_features'] = $this->normalizePartnerFeatures(
+                    $data['pageContentByLocale'][$locale]['partner_features'] ?? []
+                );
+            }
+            $data['partner_page_images'] = $this->normalizePartnerImages(
                 $data['pageContentByLocale']['en']['partner_images'] ?? $data['pageContentByLocale'][array_key_first($data['pageContentByLocale'])]['partner_images'] ?? []
             );
         } elseif ($pageType === 'contact') {
@@ -179,10 +207,38 @@ class PageController extends Controller
                 'homepage_mobile_title' => $c['mobile_title'] ?? '',
                 'homepage_mobile_image' => $c['mobile_image'] ?? '',
                 'homepage_mobile_bg' => $c['mobile_bg'] ?? '',
+                'homepage_impact_feature_label' => $c['impact_feature_label'] ?? 'What we focus on',
+                'homepage_impact_feature_1_title' => $c['impact_feature_1_title'] ?? 'Community updates',
+                'homepage_impact_feature_1_desc' => $c['impact_feature_1_desc'] ?? 'Short, clear updates that show what is happening on the ground.',
+                'homepage_impact_feature_2_title' => $c['impact_feature_2_title'] ?? 'Transparent reporting',
+                'homepage_impact_feature_2_desc' => $c['impact_feature_2_desc'] ?? 'Simple reporting that helps supporters understand the results.',
+                'homepage_impact_feature_3_title' => $c['impact_feature_3_title'] ?? 'Direct response',
+                'homepage_impact_feature_3_desc' => $c['impact_feature_3_desc'] ?? 'Fast action when families need practical help the most.',
+                'homepage_trust_subtitle' => $c['trust_subtitle'] ?? 'Built on trust',
+                'homepage_trust_title' => $c['trust_title'] ?? 'Support that feels local, practical, and accountable.',
+                'homepage_trust_description' => $c['trust_description'] ?? 'NGO work is strongest when it stays close to the people it serves. We listen first, respond with simple action, and keep donors and partners informed along the way.',
+                'homepage_trust_step_1_title' => $c['trust_step_1_title'] ?? 'Listen to the community',
+                'homepage_trust_step_1_desc' => $c['trust_step_1_desc'] ?? 'We work with local families, schools, and leaders to understand what matters most.',
+                'homepage_trust_step_2_title' => $c['trust_step_2_title'] ?? 'Act with purpose',
+                'homepage_trust_step_2_desc' => $c['trust_step_2_desc'] ?? 'Every program is designed to be useful, visible, and easy to support.',
+                'homepage_trust_step_3_title' => $c['trust_step_3_title'] ?? 'Show the outcome',
+                'homepage_trust_step_3_desc' => $c['trust_step_3_desc'] ?? 'We keep the story transparent so people can see the impact of their help.',
+                'homepage_trust_image' => $c['trust_image'] ?? '',
+                'homepage_trust_quote_label' => $c['trust_quote_label'] ?? 'Why it matters',
+                'homepage_trust_quote_text' => $c['trust_quote_text'] ?? 'Small, clear actions build trust, and trust makes long-term community support possible.',
                 'homepage_style_title' => $c['style_title'] ?? 'Featured programs',
                 'homepage_styles' => is_array($c['styles'] ?? null) ? $c['styles'] : [],
                 'homepage_partners_title' => $c['partners_title'] ?? 'Our supporters',
                 'homepage_partner_images' => $this->normalizePartnerImages($c['partner_images'] ?? []),
+            ]);
+        } elseif ($pageType === 'partner') {
+            $c = $page->getPageContentForLocale('en');
+            $data = array_merge($data, [
+                'partner_page_title' => $c['partners_title'] ?? 'Our supporters',
+                'partner_page_description' => $c['partners_description'] ?? 'Partners and organizations helping grow practical education and community support.',
+                'partner_page_feature_image' => $c['partner_feature_image'] ?? '',
+                'partner_page_features' => $this->normalizePartnerFeatures($c['partner_features'] ?? []),
+                'partner_page_images' => $this->normalizePartnerImages($c['partner_images'] ?? []),
             ]);
         }
 
@@ -307,6 +363,12 @@ class PageController extends Controller
     private function normalizeAboutUsSharedImages(array $pageContentByLocale): array
     {
         $imageKeys = ['different_image', 'promise_image'];
+        for ($i = 1; $i <= 3; $i++) {
+            $imageKeys[] = "solution_{$i}_image";
+        }
+        for ($i = 1; $i <= 6; $i++) {
+            $imageKeys[] = "interest_{$i}_image";
+        }
         $locales = PageLocales::all();
         $canonical = [];
         foreach ($imageKeys as $key) {
@@ -323,6 +385,22 @@ class PageController extends Controller
             foreach ($imageKeys as $key) {
                 $pageContentByLocale[$locale][$key] = $canonical[$key];
             }
+        }
+
+        $stripImages = [];
+        foreach ($locales as $locale) {
+            $val = $pageContentByLocale[$locale]['about_strip_images'] ?? [];
+            if (is_array($val)) {
+                $stripImages = array_values(array_filter(array_map('strval', $val)));
+            } elseif (is_string($val) && trim($val) !== '') {
+                $stripImages = [trim($val)];
+            }
+            if (!empty($stripImages)) {
+                break;
+            }
+        }
+        foreach ($locales as $locale) {
+            $pageContentByLocale[$locale]['about_strip_images'] = $stripImages;
         }
         return $pageContentByLocale;
     }
@@ -345,10 +423,68 @@ class PageController extends Controller
         return $pageContentByLocale;
     }
 
+    private function normalizePartnerSharedImages(array $pageContentByLocale): array
+    {
+        $locales = PageLocales::all();
+        $partnerImages = [];
+        foreach ($locales as $locale) {
+            $arr = $pageContentByLocale[$locale]['partner_images'] ?? [];
+            if (is_array($arr) && !empty($arr)) {
+                $partnerImages = $this->normalizePartnerImages($arr);
+                break;
+            }
+        }
+        foreach ($locales as $locale) {
+            $pageContentByLocale[$locale]['partner_images'] = $partnerImages ?: ($pageContentByLocale[$locale]['partner_images'] ?? []);
+        }
+        return $pageContentByLocale;
+    }
+
+    private function normalizeProductFeatureCards(array $value): array
+    {
+        $defaults = [
+            ['title' => 'Education', 'description' => 'School support, learning, and access.', 'image' => ''],
+            ['title' => 'Health', 'description' => 'Outreach, referrals, and basic care.', 'image' => ''],
+            ['title' => 'Relief', 'description' => 'Rapid support during urgent hardship.', 'image' => ''],
+            ['title' => 'Partnership', 'description' => 'Local work with shared accountability.', 'image' => ''],
+        ];
+
+        $result = [];
+        for ($i = 0; $i < 4; $i++) {
+            $item = $value[$i] ?? $defaults[$i];
+            $result[] = [
+                'title' => is_array($item) ? ($item['title'] ?? $defaults[$i]['title']) : $defaults[$i]['title'],
+                'description' => is_array($item) ? ($item['description'] ?? $defaults[$i]['description']) : $defaults[$i]['description'],
+                'image' => is_array($item) ? ($item['image'] ?? $defaults[$i]['image']) : $defaults[$i]['image'],
+            ];
+        }
+
+        return $result;
+    }
+
+    private function normalizePartnerFeatures(array $value): array
+    {
+        $defaults = [
+            ['title' => 'Funding & grants', 'description' => 'Support programs, materials, teacher stipends, and infrastructure projects.'],
+            ['title' => 'In-kind expertise', 'description' => 'Offer training, curriculum resources, monitoring & evaluation, or tech support.'],
+        ];
+
+        $result = [];
+        for ($i = 0; $i < 2; $i++) {
+            $item = $value[$i] ?? $defaults[$i];
+            $result[] = [
+                'title' => is_array($item) ? ($item['title'] ?? $defaults[$i]['title']) : $defaults[$i]['title'],
+                'description' => is_array($item) ? ($item['description'] ?? $defaults[$i]['description']) : $defaults[$i]['description'],
+            ];
+        }
+
+        return $result;
+    }
+
     /** Ensure homepage image fields are shared across locales (first non-empty, EN first) */
     private function normalizeHomepageSharedImages(array $pageContentByLocale): array
     {
-        $imageKeys = ['hero_image', 'company_logo', 'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg'];
+        $imageKeys = ['hero_image', 'company_logo', 'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg', 'trust_image'];
         $locales = PageLocales::all();
         $canonical = [];
         foreach ($imageKeys as $key) {
@@ -394,20 +530,18 @@ class PageController extends Controller
 
     private function normalizeAboutUsSolutionCards(array $value): array
     {
-        $validKeys = array_keys(config('about_us_icons.solution_icons', []));
         $defaults = [
-            ['title' => 'Education support', 'description' => 'Scholarships, school supplies, and learning support for children and young people.', 'icon' => 'sol_1'],
-            ['title' => 'Health outreach', 'description' => 'Wellness visits, family care, and community health education.', 'icon' => 'sol_2'],
-            ['title' => 'Emergency relief', 'description' => 'Fast support for families facing crisis, displacement, or urgent hardship.', 'icon' => 'sol_3'],
+            ['title' => 'Education support', 'description' => 'Scholarships, school supplies, and learning support for children and young people.', 'image' => ''],
+            ['title' => 'Health outreach', 'description' => 'Wellness visits, family care, and community health education.', 'image' => ''],
+            ['title' => 'Emergency relief', 'description' => 'Fast support for families facing crisis, displacement, or urgent hardship.', 'image' => ''],
         ];
         $result = [];
         for ($i = 0; $i < 3; $i++) {
             $item = $value[$i] ?? $defaults[$i];
-            $icon = (is_array($item) ? ($item['icon'] ?? $defaults[$i]['icon']) : $defaults[$i]['icon']);
             $result[] = [
                 'title' => is_array($item) ? ($item['title'] ?? $defaults[$i]['title']) : $defaults[$i]['title'],
                 'description' => is_array($item) ? ($item['description'] ?? $defaults[$i]['description']) : $defaults[$i]['description'],
-                'icon' => in_array($icon, $validKeys, true) ? $icon : $defaults[$i]['icon'],
+                'image' => is_array($item) ? ($item['image'] ?? $defaults[$i]['image']) : $defaults[$i]['image'],
             ];
         }
         return $result;
@@ -415,23 +549,21 @@ class PageController extends Controller
 
     private function normalizeAboutUsInterestCards(array $value): array
     {
-        $validKeys = array_keys(config('about_us_icons.interest_icons', []));
         $defaults = [
-            ['title' => 'Meals and essentials', 'description' => 'Helping families access what they need most, when they need it most.', 'icon' => 'int_1'],
-            ['title' => 'Youth mentoring', 'description' => 'Guidance, encouragement, and opportunities for young people to grow.', 'icon' => 'int_2'],
-            ['title' => 'Reports and transparency', 'description' => 'Clear reporting so supporters can see how the work makes a difference.', 'icon' => 'int_3'],
-            ['title' => 'Community partnerships', 'description' => 'Working side by side with local organizations to strengthen support.', 'icon' => 'int_4'],
-            ['title' => 'Volunteer care', 'description' => 'Equipping volunteers with simple, effective ways to help.', 'icon' => 'int_5'],
-            ['title' => 'Ongoing support', 'description' => 'Stay connected through updates, needs, and opportunities to serve.', 'icon' => 'int_6'],
+            ['title' => 'Meals and essentials', 'description' => 'Helping families access what they need most, when they need it most.', 'image' => ''],
+            ['title' => 'Youth mentoring', 'description' => 'Guidance, encouragement, and opportunities for young people to grow.', 'image' => ''],
+            ['title' => 'Reports and transparency', 'description' => 'Clear reporting so supporters can see how the work makes a difference.', 'image' => ''],
+            ['title' => 'Community partnerships', 'description' => 'Working side by side with local organizations to strengthen support.', 'image' => ''],
+            ['title' => 'Volunteer care', 'description' => 'Equipping volunteers with simple, effective ways to help.', 'image' => ''],
+            ['title' => 'Ongoing support', 'description' => 'Stay connected through updates, needs, and opportunities to serve.', 'image' => ''],
         ];
         $result = [];
         for ($i = 0; $i < 6; $i++) {
             $item = $value[$i] ?? $defaults[$i];
-            $icon = (is_array($item) ? ($item['icon'] ?? $defaults[$i]['icon']) : $defaults[$i]['icon']);
             $result[] = [
                 'title' => is_array($item) ? ($item['title'] ?? $defaults[$i]['title']) : $defaults[$i]['title'],
                 'description' => is_array($item) ? ($item['description'] ?? $defaults[$i]['description']) : $defaults[$i]['description'],
-                'icon' => in_array($icon, $validKeys, true) ? $icon : $defaults[$i]['icon'],
+                'image' => is_array($item) ? ($item['image'] ?? $defaults[$i]['image']) : $defaults[$i]['image'],
             ];
         }
         return $result;
@@ -477,6 +609,61 @@ class PageController extends Controller
         return $result;
     }
 
+    private function extractBannerFields(Request $request): array
+    {
+        return [
+            'banner_title' => trim((string) $request->input('banner_title', '')),
+            'banner_description' => trim((string) $request->input('banner_description', '')),
+            'background_image' => trim((string) $request->input('background_image', '')),
+        ];
+    }
+
+    private function storeBannerBackgroundImage(Request $request, ?string $fallback = ''): string
+    {
+        $uploadPath = 'images/banners';
+        $path = public_path($uploadPath);
+        if (!file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+
+        $file = $request->file('background_image_file');
+        if ($file?->isValid()) {
+            $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path($uploadPath), $name);
+            return $uploadPath . '/' . $name;
+        }
+
+        return trim((string) $fallback);
+    }
+
+    private function mergeBannerFieldsIntoPageContent(array $content, array $bannerFields): array
+    {
+        $bannerFields = array_filter($bannerFields, static fn ($value) => is_string($value) ? trim($value) !== '' : !empty($value));
+        if (empty($bannerFields)) {
+            return $content;
+        }
+
+        $locales = PageLocales::all();
+        $hasLocaleKeys = false;
+        foreach (array_keys($content) as $key) {
+            if (in_array($key, $locales, true)) {
+                $hasLocaleKeys = true;
+                break;
+            }
+        }
+
+        if ($hasLocaleKeys) {
+            foreach ($locales as $locale) {
+                if (isset($content[$locale]) && is_array($content[$locale])) {
+                    $content[$locale] = array_merge($content[$locale], $bannerFields);
+                }
+            }
+            return $content;
+        }
+
+        return array_merge($content, $bannerFields);
+    }
+
     public function update(Request $request, Page $page)
     {
         $request->attributes->set('audit_batch_id', Str::uuid()->toString());
@@ -490,6 +677,9 @@ class PageController extends Controller
             'slug' => ['required', 'string', 'max:255', 'unique:pages,slug,' . $page->id],
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string'],
+            'banner_title' => ['nullable', 'string', 'max:255'],
+            'banner_description' => ['nullable', 'string'],
+            'background_image' => ['nullable', 'string', 'max:500'],
             'route_name' => ['nullable', 'string', 'max:255'],
             'menu_group' => ['nullable', 'string', Rule::in(array_keys(Page::MENU_GROUP_LABELS))],
             'is_active' => ['boolean'],
@@ -514,6 +704,7 @@ class PageController extends Controller
         $validated['translations'] = $this->buildTranslationsFromRequest($request);
         $validated['title'] = $validated['translations']['en']['title'] ?? $validated['title'];
         $validated['content'] = $validated['translations']['en']['content'] ?? $validated['content'] ?? null;
+        $bannerFields = $this->extractBannerFields($request);
 
         $originalSlug = $page->slug;
         $pageType = $page->getPageType();
@@ -522,13 +713,16 @@ class PageController extends Controller
         // page_content_locale and lose all data
         if (!in_array($pageType ?? $originalSlug, ['home', 'platform', 'about-us', 'product', 'contact'])) {
             $pageContentByLocale = $request->input('page_content_locale', []);
-            $built = [];
+            $built = is_array($page->page_content ?? null) ? $page->page_content : [];
             foreach (PageLocales::all() as $locale) {
+                if (!array_key_exists($locale, $pageContentByLocale)) {
+                    continue;
+                }
                 $json = $pageContentByLocale[$locale] ?? null;
                 $decoded = is_string($json) ? json_decode($json, true) : null;
                 $built[$locale] = is_array($decoded) ? $decoded : [];
             }
-            $validated['page_content'] = $built;
+            $validated['page_content'] = $this->mergeBannerFieldsIntoPageContent($built, $bannerFields);
         }
 
         $validated['og_tags'] = array_filter([
@@ -580,6 +774,8 @@ class PageController extends Controller
             $this->saveAboutUsSections($request, $page);
         } elseif ($effectiveType === 'product') {
             $this->saveProductSections($request, $page);
+        } elseif ($effectiveType === 'partner') {
+            $this->savePartnerSections($request, $page);
         } elseif ($effectiveType === 'contact') {
             $this->saveContactSections($request, $page);
         }
@@ -597,6 +793,7 @@ class PageController extends Controller
 
         $sections = $request->input('homepage_sections', []);
         $content = [];
+        $bannerFields = $this->extractBannerFields($request);
 
         $saveImage = function ($file, ?string $fallback) use ($uploadPath) {
             if ($file?->isValid()) {
@@ -607,7 +804,7 @@ class PageController extends Controller
             return $fallback ?? '';
         };
 
-        $imageKeys = ['hero_image', 'company_logo', 'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg'];
+        $imageKeys = ['hero_image', 'company_logo', 'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg', 'trust_image'];
         $sharedImages = [];
         foreach ($imageKeys as $key) {
             $file = null;
@@ -669,6 +866,8 @@ class PageController extends Controller
             }
             $savedStyles[] = [
                 'image' => $styleImage,
+                'title' => trim($style['title'] ?? ''),
+                'description' => trim($style['description'] ?? ''),
                 'colors' => $colors,
             ];
         }
@@ -676,6 +875,8 @@ class PageController extends Controller
         foreach (PageLocales::all() as $locale) {
             $s = $sections[$locale] ?? [];
             $content[$locale] = [
+                'banner_title' => $bannerFields['banner_title'] ?? '',
+                'banner_description' => $bannerFields['banner_description'] ?? '',
                 'hero_headline' => $s['hero_headline'] ?? '',
                 'hero_description' => $s['hero_description'] ?? '',
                 'hero_image' => $sharedImages['hero_image'],
@@ -695,6 +896,25 @@ class PageController extends Controller
                 'mobile_title' => $s['mobile_title'] ?? '',
                 'mobile_image' => $sharedImages['mobile_image'],
                 'mobile_bg' => $sharedImages['mobile_bg'],
+                'impact_feature_label' => $s['impact_feature_label'] ?? '',
+                'impact_feature_1_title' => $s['impact_feature_1_title'] ?? '',
+                'impact_feature_1_desc' => $s['impact_feature_1_desc'] ?? '',
+                'impact_feature_2_title' => $s['impact_feature_2_title'] ?? '',
+                'impact_feature_2_desc' => $s['impact_feature_2_desc'] ?? '',
+                'impact_feature_3_title' => $s['impact_feature_3_title'] ?? '',
+                'impact_feature_3_desc' => $s['impact_feature_3_desc'] ?? '',
+                'trust_subtitle' => $s['trust_subtitle'] ?? '',
+                'trust_title' => $s['trust_title'] ?? '',
+                'trust_description' => $s['trust_description'] ?? '',
+                'trust_step_1_title' => $s['trust_step_1_title'] ?? '',
+                'trust_step_1_desc' => $s['trust_step_1_desc'] ?? '',
+                'trust_step_2_title' => $s['trust_step_2_title'] ?? '',
+                'trust_step_2_desc' => $s['trust_step_2_desc'] ?? '',
+                'trust_step_3_title' => $s['trust_step_3_title'] ?? '',
+                'trust_step_3_desc' => $s['trust_step_3_desc'] ?? '',
+                'trust_image' => $sharedImages['trust_image'],
+                'trust_quote_label' => $s['trust_quote_label'] ?? '',
+                'trust_quote_text' => $s['trust_quote_text'] ?? '',
                 'style_title' => $s['style_title'] ?? '',
                 'color_choice_title' => $s['color_choice_title'] ?? 'COLOR CHOICE',
                 'styles' => $savedStyles,
@@ -704,7 +924,7 @@ class PageController extends Controller
         }
 
         $oldEnHome = $page->getPageContentForLocale('en');
-        foreach (['hero_image', 'company_logo', 'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg'] as $key) {
+        foreach (['hero_image', 'company_logo', 'capabilities_image', 'marketing_image', 'mobile_image', 'mobile_bg', 'trust_image'] as $key) {
             $this->deleteRemovedPageImages(
                 !empty($oldEnHome[$key]) ? [(string) $oldEnHome[$key]] : [],
                 !empty($sharedImages[$key]) ? [(string) $sharedImages[$key]] : [],
@@ -733,6 +953,7 @@ class PageController extends Controller
         $sections = $request->input('platform_sections', []);
         $validIconKeys = array_keys(config('platform_feature_icons.icons', []));
         $defaultIcon = $validIconKeys[0] ?? 'icon_1';
+        $bannerFields = $this->extractBannerFields($request);
 
         $saveImage = function ($file, ?string $fallback) use ($uploadPath) {
             if ($file?->isValid()) {
@@ -824,6 +1045,8 @@ class PageController extends Controller
                 }
             }
             $content[$locale] = [
+                'banner_title' => $bannerFields['banner_title'] ?? '',
+                'banner_description' => $bannerFields['banner_description'] ?? '',
                 'profile_title' => $s['profile_title'] ?? '',
                 'profile_tagline' => $s['profile_tagline'] ?? '',
                 'platform_slider_images' => $currentSlider,
@@ -864,6 +1087,11 @@ class PageController extends Controller
         $sections = $request->input('about_us_sections', []);
         $validSolKeys = array_keys(config('about_us_icons.solution_icons', []));
         $validIntKeys = array_keys(config('about_us_icons.interest_icons', []));
+        $bannerFields = $this->extractBannerFields($request);
+        $bannerFields['background_image'] = $this->storeBannerBackgroundImage(
+            $request,
+            $bannerFields['background_image'] ?? ($page->getPageContentForLocale('en')['background_image'] ?? '')
+        );
 
         $saveImage = function ($file, ?string $fallback) use ($uploadPath) {
             if ($file?->isValid()) {
@@ -875,6 +1103,12 @@ class PageController extends Controller
         };
 
         $imageKeys = ['different_image', 'promise_image'];
+        for ($i = 1; $i <= 3; $i++) {
+            $imageKeys[] = "solution_{$i}_image";
+        }
+        for ($i = 1; $i <= 6; $i++) {
+            $imageKeys[] = "interest_{$i}_image";
+        }
         $sharedImages = [];
         foreach ($imageKeys as $key) {
             $file = null;
@@ -893,6 +1127,37 @@ class PageController extends Controller
             $sharedImages[$key] = $saveImage($file, $pathVal ?: null);
         }
 
+        $existingStripImages = array_values(array_filter(array_map('strval', (array) ($page->getPageContentForLocale('en')['about_strip_images'] ?? []))));
+        $keptStripImages = array_values(array_filter(array_map('strval', (array) $request->input('about_keep_strip_images', []))));
+        $stagedStripImages = $this->validatedStagedPaths($request, 'about_staged_strip_paths', 'images/about-us');
+        $directStripImages = [];
+        foreach (PageLocales::all() as $locale) {
+            $files = $request->file("about_us_sections.{$locale}.about_strip_image_files", []);
+            if (!is_array($files)) {
+                $files = $files ? [$files] : [];
+            }
+            foreach ($files as $file) {
+                if ($file?->isValid()) {
+                    $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path($uploadPath), $name);
+                    $directStripImages[] = $uploadPath . '/' . $name;
+                }
+            }
+        }
+        $directStripImages = array_values(array_unique($directStripImages));
+        $currentStripImages = $stagedStripImages;
+        if (!empty($keptStripImages)) {
+            $currentStripImages = array_values(array_unique(array_merge(
+                array_values(array_intersect($existingStripImages, $keptStripImages)),
+                $stagedStripImages,
+                $directStripImages
+            )));
+        } elseif (!empty($directStripImages) || !empty($stagedStripImages)) {
+            $currentStripImages = array_values(array_unique(array_merge($stagedStripImages, $directStripImages)));
+        } elseif (empty($stagedStripImages) && empty($directStripImages) && !empty($existingStripImages)) {
+            $currentStripImages = $existingStripImages;
+        }
+
         $content = [];
         foreach (PageLocales::all() as $locale) {
             $s = $sections[$locale] ?? [];
@@ -907,14 +1172,26 @@ class PageController extends Controller
             }
             $intCards = [];
             for ($i = 1; $i <= 6; $i++) {
-                $icon = $s["interest_{$i}_icon"] ?? "int_{$i}";
+                $imageKey = "interest_{$i}_image";
                 $intCards[] = [
                     'title' => $s["interest_{$i}_title"] ?? '',
                     'description' => $s["interest_{$i}_description"] ?? '',
-                    'icon' => in_array($icon, $validIntKeys, true) ? $icon : ($validIntKeys[$i - 1] ?? 'int_1'),
+                    'image' => $sharedImages[$imageKey] ?? ($s[$imageKey] ?? ''),
+                ];
+            }
+            $solCards = [];
+            for ($i = 1; $i <= 3; $i++) {
+                $imageKey = "solution_{$i}_image";
+                $solCards[] = [
+                    'title' => $s["solution_{$i}_title"] ?? '',
+                    'description' => $s["solution_{$i}_description"] ?? '',
+                    'image' => $sharedImages[$imageKey] ?? ($s[$imageKey] ?? ''),
                 ];
             }
             $content[$locale] = [
+                'banner_title' => $bannerFields['banner_title'] ?? '',
+                'banner_description' => $bannerFields['banner_description'] ?? '',
+                'background_image' => $bannerFields['background_image'] ?? '',
                 'results_subtitle' => $s['results_subtitle'] ?? '',
                 'results_title' => $s['results_title'] ?? '',
                 'results_description' => $s['results_description'] ?? '',
@@ -923,6 +1200,13 @@ class PageController extends Controller
                 'different_description' => $s['different_description'] ?? '',
                 'different_check' => $s['different_check'] ?? '',
                 'different_image' => $sharedImages['different_image'],
+                'about_strip_images' => $currentStripImages,
+                'mission_1_title' => $s['mission_1_title'] ?? '',
+                'mission_1_description' => $s['mission_1_description'] ?? '',
+                'mission_2_title' => $s['mission_2_title'] ?? '',
+                'mission_2_description' => $s['mission_2_description'] ?? '',
+                'mission_3_title' => $s['mission_3_title'] ?? '',
+                'mission_3_description' => $s['mission_3_description'] ?? '',
                 'promise_subtitle' => $s['promise_subtitle'] ?? '',
                 'promise_title' => $s['promise_title'] ?? '',
                 'promise_description' => $s['promise_description'] ?? '',
@@ -935,6 +1219,7 @@ class PageController extends Controller
                 'interests_title' => $s['interests_title'] ?? '',
                 'interest_cards' => $this->normalizeAboutUsInterestCards($intCards),
                 'ready_title' => $s['ready_title'] ?? '',
+                'ready_description' => $s['ready_description'] ?? '',
             ];
         }
 
@@ -946,6 +1231,11 @@ class PageController extends Controller
                 'images/about-us'
             );
         }
+        $this->deleteRemovedPageImages(
+            !empty($oldEnAbout['about_strip_images']) && is_array($oldEnAbout['about_strip_images']) ? array_map('strval', $oldEnAbout['about_strip_images']) : [],
+            $currentStripImages,
+            'images/about-us'
+        );
 
         $oldContent = $page->page_content ?? [];
         $page->update(['page_content' => $content]);
@@ -955,15 +1245,34 @@ class PageController extends Controller
     private function saveProductSections(Request $request, Page $page): void
     {
         $uploadPath = 'images/homepage';
-        $path = public_path($uploadPath);
-        if (!file_exists($path)) {
-            mkdir($path, 0755, true);
+        $featureUploadPath = 'images/product-features';
+        foreach ([$uploadPath, $featureUploadPath] as $dir) {
+            $path = public_path($dir);
+            if (!file_exists($path)) {
+                mkdir($path, 0755, true);
+            }
         }
 
         $sections = $request->input('product_sections', []);
+        if (!is_array($sections)) {
+            $sections = [];
+        }
         $keep = $request->input('product_keep_partner_images', []) ?? [];
         $existingPartner = $this->normalizePartnerImages($page->getPageContentForLocale('en')['partner_images'] ?? []);
         $currentPartner = array_values(array_intersect($existingPartner, is_array($keep) ? $keep : [$keep]));
+        $bannerFields = $this->extractBannerFields($request);
+        $bannerFields['background_image'] = $this->storeBannerBackgroundImage(
+            $request,
+            $bannerFields['background_image'] ?? ($page->getPageContentForLocale('en')['background_image'] ?? '')
+        );
+        $saveImage = function ($file, ?string $fallback, string $path) {
+            if ($file?->isValid()) {
+                $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path($path), $name);
+                return $path . '/' . $name;
+            }
+            return trim((string) $fallback);
+        };
         if ($request->hasFile('product_partner_image_files')) {
             $seen = [];
             foreach ($request->file('product_partner_image_files') as $file) {
@@ -983,21 +1292,171 @@ class PageController extends Controller
             $currentPartner[] = $path;
         }
 
+        $currentFeatureImages = [];
+        for ($i = 0; $i < 4; $i++) {
+            $file = null;
+            $pathVal = '';
+            foreach (PageLocales::all() as $locale) {
+                $f = $request->file("product_sections.{$locale}.feature_cards.{$i}.image_file");
+                $localeFeatureCards = $sections[$locale]['feature_cards'] ?? [];
+                $p = $localeFeatureCards[$i]['image'] ?? '';
+                if ($f?->isValid()) {
+                    $file = $f;
+                    break;
+                }
+                if (!empty($p)) {
+                    $pathVal = $p;
+                }
+            }
+            $currentFeatureImages[$i] = $saveImage($file, $pathVal ?: null, $featureUploadPath);
+        }
+
         $this->deleteRemovedPageImages($existingPartner, $currentPartner, 'images/homepage');
         $content = [];
         foreach (PageLocales::all() as $locale) {
             $s = $sections[$locale] ?? [];
+            $featureCards = $this->normalizeProductFeatureCards($s['feature_cards'] ?? []);
+            foreach ($featureCards as $index => $card) {
+                $featureCards[$index]['image'] = $currentFeatureImages[$index] ?? ($card['image'] ?? '');
+            }
             $content[$locale] = [
+                'banner_title' => $bannerFields['banner_title'] ?? '',
+                'banner_description' => $bannerFields['banner_description'] ?? '',
+                'background_image' => $bannerFields['background_image'] ?? '',
                 'description' => $s['description'] ?? '',
                 'products_title' => $s['products_title'] ?? 'Our Programs',
+                'feature_section_title' => trim((string) ($s['feature_section_title'] ?? '')) ?: 'Impact areas',
+                'feature_section_description' => trim((string) ($s['feature_section_description'] ?? '')) ?: 'Programs are designed around practical action, local accountability, and visible results.',
+                'feature_cards' => $featureCards,
                 'partners_title' => $s['partners_title'] ?? 'Our supporters',
                 'partner_images' => $currentPartner,
             ];
         }
 
+        $oldEnProduct = $page->getPageContentForLocale('en');
+        $this->deleteRemovedPageImages(
+            !empty($oldEnProduct['background_image']) ? [(string) $oldEnProduct['background_image']] : [],
+            !empty($bannerFields['background_image']) ? [(string) $bannerFields['background_image']] : [],
+            'images/banners'
+        );
+        $oldFeatureImages = [];
+        foreach (($oldEnProduct['feature_cards'] ?? []) as $card) {
+            if (!empty($card['image'])) {
+                $oldFeatureImages[] = (string) $card['image'];
+            }
+        }
+        $this->deleteRemovedPageImages(
+            $oldFeatureImages,
+            array_values(array_filter($currentFeatureImages)),
+            'images/product-features'
+        );
+
         $oldContent = $page->page_content ?? [];
         $page->update(['page_content' => $content]);
         AuditLogService::logEdit(AuditLog::MODULE_PAGE, $page->title . ' (Product sections)', ['page_content' => $oldContent], ['page_content' => $content]);
+    }
+
+    private function savePartnerSections(Request $request, Page $page): void
+    {
+        $uploadPath = 'images/partners';
+        $path = public_path($uploadPath);
+        if (!file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+
+        $sections = $request->input('partner_sections', []);
+        if (!is_array($sections)) {
+            $sections = [];
+        }
+
+        $bannerFields = $this->extractBannerFields($request);
+        $bannerFields['background_image'] = $this->storeBannerBackgroundImage(
+            $request,
+            $bannerFields['background_image'] ?? ($page->getPageContentForLocale('en')['background_image'] ?? '')
+        );
+
+        $keep = $request->input('partner_keep_images', []) ?? [];
+        $existingPartner = $this->normalizePartnerImages($page->getPageContentForLocale('en')['partner_images'] ?? []);
+        $currentPartner = array_values(array_intersect($existingPartner, is_array($keep) ? $keep : [$keep]));
+
+        $heroImageFallback = $page->getPageContentForLocale('en')['partner_feature_image'] ?? '';
+        $heroImage = $heroImageFallback;
+        foreach (PageLocales::all() as $locale) {
+            $heroImageFile = $request->file("partner_sections.{$locale}.partner_feature_image_file");
+            if ($heroImageFile?->isValid()) {
+                $name = Str::slug(pathinfo($heroImageFile->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $heroImageFile->getClientOriginalExtension();
+                $heroImageFile->move(public_path($uploadPath), $name);
+                $heroImage = $uploadPath . '/' . $name;
+                break;
+            }
+            if (!empty($sections[$locale]['partner_feature_image'] ?? null)) {
+                $heroImage = trim((string) $sections[$locale]['partner_feature_image']);
+            }
+        }
+
+        $saveImage = function ($file, ?string $fallback) use ($uploadPath) {
+            if ($file?->isValid()) {
+                $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path($uploadPath), $name);
+                return $uploadPath . '/' . $name;
+            }
+            return trim((string) $fallback);
+        };
+
+        if ($request->hasFile('partner_image_files')) {
+            $seen = [];
+            foreach ($request->file('partner_image_files') as $file) {
+                if ($file?->isValid()) {
+                    $key = $file->getClientOriginalName() . '-' . $file->getSize();
+                    if (isset($seen[$key])) {
+                        continue;
+                    }
+                    $seen[$key] = true;
+                    $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path($uploadPath), $name);
+                    $currentPartner[] = $uploadPath . '/' . $name;
+                }
+            }
+        }
+
+        foreach ($this->validatedStagedPaths($request, 'partner_staged_image_paths', 'images/partners') as $path) {
+            $currentPartner[] = $path;
+        }
+
+        $this->deleteRemovedPageImages($existingPartner, $currentPartner, 'images/partners');
+        $oldHeroImage = $page->getPageContentForLocale('en')['partner_feature_image'] ?? '';
+        if (!empty($oldHeroImage) && $oldHeroImage !== $heroImage) {
+            $this->deleteRemovedPageImages([(string) $oldHeroImage], [(string) $heroImage], 'images/partners');
+        }
+
+        $content = [];
+        foreach (PageLocales::all() as $locale) {
+            $s = $sections[$locale] ?? [];
+            $partnerFeatures = $this->normalizePartnerFeatures($s['partner_features'] ?? []);
+            $content[$locale] = [
+                'banner_title' => $bannerFields['banner_title'] ?? '',
+                'banner_description' => $bannerFields['banner_description'] ?? '',
+                'background_image' => $bannerFields['background_image'] ?? '',
+                'partners_title' => $s['partners_title'] ?? 'How you can partner',
+                'partners_description' => $s['partners_description'] ?? 'We work with schools, donors, corporations, and NGOs to support education programs.',
+                'partner_feature_image' => $heroImage,
+                'partner_features' => $partnerFeatures,
+                'supporters_title' => $s['supporters_title'] ?? 'Our supporters',
+                'supporters_description' => $s['supporters_description'] ?? 'Partners and organizations helping grow practical education and community support.',
+                'partner_images' => $currentPartner,
+            ];
+        }
+
+        $oldEnPartner = $page->getPageContentForLocale('en');
+        $this->deleteRemovedPageImages(
+            !empty($oldEnPartner['background_image']) ? [(string) $oldEnPartner['background_image']] : [],
+            !empty($bannerFields['background_image']) ? [(string) $bannerFields['background_image']] : [],
+            'images/banners'
+        );
+
+        $oldContent = $page->page_content ?? [];
+        $page->update(['page_content' => $content]);
+        AuditLogService::logEdit(AuditLog::MODULE_PAGE, $page->title . ' (Partner sections)', ['page_content' => $oldContent], ['page_content' => $content]);
     }
 
     private function saveContactSections(Request $request, Page $page): void
@@ -1006,6 +1465,7 @@ class PageController extends Controller
         if (!is_array($sections)) {
             $sections = [];
         }
+        $bannerFields = $this->extractBannerFields($request);
 
         $defaults = [
             'page_title' => 'Contact Us',
@@ -1081,6 +1541,8 @@ class PageController extends Controller
             }
 
             $content[$locale] = [
+                'banner_title' => $bannerFields['banner_title'] ?? '',
+                'banner_description' => $bannerFields['banner_description'] ?? '',
                 'page_title' => trim((string) ($s['page_title'] ?? '')) ?: $defaults['page_title'],
                 'page_intro' => trim((string) ($s['page_intro'] ?? '')) ?: $defaults['page_intro'],
                 'contact_info_title' => trim((string) ($s['contact_info_title'] ?? '')) ?: $defaults['contact_info_title'],
@@ -1155,12 +1617,13 @@ class PageController extends Controller
     {
         $validated = $request->validate([
             'file' => ['required', 'file', 'image', 'max:10240'],
-            'purpose' => ['required', 'string', 'in:homepage_partner,platform_slider,product_partner'],
+            'purpose' => ['required', 'string', 'in:homepage_partner,platform_slider,product_partner,about_strip'],
         ]);
 
         $uploadPath = match ($validated['purpose']) {
             'homepage_partner', 'product_partner' => 'images/homepage',
             'platform_slider' => 'images/platform',
+            'about_strip' => 'images/about-us',
         };
 
         $dir = public_path($uploadPath);

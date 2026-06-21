@@ -119,22 +119,4 @@
         </div>
     </section>
 
-    <section class="bg-teal-700 text-white">
-        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div class="max-w-3xl">
-                <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-100">{{ $journeyTitle }}</p>
-                <h2 class="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-                    {{ $journeyDescription }}
-                </h2>
-            </div>
-            <div class="mt-8 flex flex-wrap gap-4">
-                <a href="{{ route('frontend.contact') }}" class="rounded-full bg-white px-6 py-3 text-sm font-semibold text-teal-800 transition hover:bg-teal-50">
-                    Get in touch
-                </a>
-                <a href="{{ route('frontend.donate') }}" class="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-                    Support our work
-                </a>
-            </div>
-        </div>
-    </section>
 @endsection

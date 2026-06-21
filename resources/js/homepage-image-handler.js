@@ -189,6 +189,7 @@ class HomepageImageHandler {
             homepage_partner: 'homepage_staged_partner_paths[]',
             platform_slider: 'platform_staged_slider_paths[]',
             product_partner: 'product_staged_partner_paths[]',
+            about_strip: 'about_staged_strip_paths[]',
         };
 
         form.addEventListener('submit', async (e) => {

@@ -16,6 +16,7 @@
         ?? ($bannerPage && method_exists($bannerPage, 'getTitleForLocale') ? $bannerPage->getTitleForLocale() : '');
 
     $bannerTitle = $bannerTitle
+        ?? data_get($bannerPageContent, 'banner_title')
         ?? data_get($bannerHero, 'title')
         ?? data_get($bannerPageContent, 'hero_title')
         ?? ($bannerData['title'] ?? null)
@@ -28,6 +29,7 @@
         ?? '';
 
     $bannerDescription = $bannerDescription
+        ?? data_get($bannerPageContent, 'banner_description')
         ?? data_get($bannerHero, 'description')
         ?? data_get($bannerPageContent, 'hero_description')
         ?? ($bannerData['description'] ?? null)
@@ -57,7 +59,10 @@
     $bannerSecondaryLabel = $bannerSecondaryLabel ?? data_get($bannerSecondary, 'label');
     $bannerSecondaryHref = $bannerSecondaryHref ?? $resolveActionHref($bannerSecondary);
 
-    $bannerBackgroundImage = $bannerBackgroundImage ?? ($bannerData['background_image'] ?? '');
+    $bannerBackgroundImage = $bannerBackgroundImage
+        ?? data_get($bannerPageContent, 'background_image')
+        ?? data_get($bannerHero, 'background_image')
+        ?? ($bannerData['background_image'] ?? '');
     $bannerBackgroundImageUrl = $bannerBackgroundImage;
     if ($bannerBackgroundImageUrl !== '' && !\Illuminate\Support\Str::startsWith($bannerBackgroundImageUrl, ['http://', 'https://', '//'])) {
         $bannerBackgroundImageUrl = asset($bannerBackgroundImageUrl);
