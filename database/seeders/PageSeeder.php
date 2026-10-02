@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Page;
 use App\Models\SiteSetting;
+use App\Support\ContentSchema;
 use App\Support\PageLocales;
 use Illuminate\Database\Seeder;
 
@@ -100,7 +101,7 @@ class PageSeeder extends Seeder
             ],
             [
                 'slug' => 'about-us',
-                'title' => 'About Us',
+                'title' => 'About',
                 'content' => 'We are a non-profit team focused on education, care, and relief.',
                 'route_name' => 'frontend.about-us',
                 'meta_title' => $siteName . ' | About Us',
@@ -156,7 +157,7 @@ class PageSeeder extends Seeder
             ],
             [
                 'slug' => 'product',
-                'title' => 'Our Programs',
+                'title' => 'Our Program',
                 'content' => 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.',
                 'route_name' => 'frontend.product',
                 'meta_title' => $siteName . ' | Our Programs',
@@ -175,7 +176,7 @@ class PageSeeder extends Seeder
                     'url' => route('frontend.product'),
                     'description' => 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.',
                 ],
-                'sort_order' => 4,
+                'sort_order' => 6,
                 'page_content' => $this->localizedContent([
                     'description' => 'Our programs are designed to support communities through education, health, relief, and long-term empowerment.',
                     'products_title' => 'Our Programs',
@@ -204,7 +205,7 @@ class PageSeeder extends Seeder
                     'url' => route('frontend.history'),
                     'description' => 'Our history is rooted in local service, long-term partnerships, and practical support for families.',
                 ],
-                'sort_order' => 6,
+                'sort_order' => 4,
             ],
             [
                 'slug' => 'jobs-announcement',
@@ -323,7 +324,7 @@ class PageSeeder extends Seeder
             ],
             [
                 'slug' => 'image-gallery',
-                'title' => 'Image Gallery',
+                'title' => 'Image',
                 'content' => 'Browse the public image archive for photos, logos, and visual assets from the website.',
                 'route_name' => 'frontend.gallery',
                 'meta_title' => $siteName . ' | Image Gallery',
@@ -353,7 +354,7 @@ class PageSeeder extends Seeder
             ],
             [
                 'slug' => 'video',
-                'title' => 'Video Stories',
+                'title' => 'Video',
                 'content' => 'Videos that share updates, testimony, and community stories will appear here.',
                 'route_name' => 'frontend.page',
                 'meta_title' => $siteName . ' | Video Stories',
@@ -496,6 +497,17 @@ class PageSeeder extends Seeder
 
         foreach ($pages as $pageData) {
             $pageData['menu_group'] = $pageData['menu_group'] ?? $this->menuGroupForSlug($pageData['slug']);
+
+            if (ContentSchema::has($pageData['slug'])) {
+                // Content of editable pages is managed in the admin; never overwrite it.
+                if (Page::where('slug', $pageData['slug'])->exists()) {
+                    unset($pageData['page_content']);
+                }
+                // Browser titles and descriptions default to the "site" page settings.
+                $pageData['meta_title'] = null;
+                $pageData['meta_description'] = null;
+                $pageData['og_tags'] = null;
+            }
 
             Page::updateOrCreate(
                 ['slug' => $pageData['slug']],

@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Page;
 use App\Services\AuditLogService;
+use App\Support\ContentSchema;
 use App\Support\PageLocales;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PageController extends Controller
 {
@@ -139,6 +142,12 @@ class PageController extends Controller
         $data['bannerTitle'] = $bannerLocaleData['banner_title'] ?? '';
         $data['bannerDescription'] = $bannerLocaleData['banner_description'] ?? '';
         $data['bannerBackgroundImage'] = $bannerLocaleData['background_image'] ?? '';
+
+        if ($contentSchema = ContentSchema::for($page->slug)) {
+            $data['contentSchema'] = $contentSchema;
+
+            return view('admin.system-management.pages.edit', $data);
+        }
 
         if ($pageType === 'platform') {
             $data['platform_feature_icons'] = config('platform_feature_icons.icons', []);
@@ -708,10 +717,16 @@ class PageController extends Controller
 
         $originalSlug = $page->slug;
         $pageType = $page->getPageType();
+        $isSchemaPage = ContentSchema::has($originalSlug);
+        if ($isSchemaPage) {
+            // Content definitions are tied to the slug, so it cannot change.
+            $validated['slug'] = $originalSlug;
+            $validated['page_content'] = $this->buildSchemaContent($request, $page);
+        }
         // Use page type (from content structure) so we don't overwrite special page content
         // when slug was changed (e.g. home → homes) - otherwise we'd build from empty
         // page_content_locale and lose all data
-        if (!in_array($pageType ?? $originalSlug, ['home', 'platform', 'about-us', 'product', 'contact'])) {
+        if (!$isSchemaPage && !in_array($pageType ?? $originalSlug, ['home', 'platform', 'about-us', 'product', 'contact'])) {
             $pageContentByLocale = $request->input('page_content_locale', []);
             $built = is_array($page->page_content ?? null) ? $page->page_content : [];
             foreach (PageLocales::all() as $locale) {
@@ -765,7 +780,7 @@ class PageController extends Controller
         // Use page type (from content structure) so section data is saved even when slug was changed
         // (e.g. home → homes). If we used only $originalSlug, a page with slug "homes" but home-type
         // content would not trigger saveHomepageSections, and we'd overwrite with empty page_content.
-        $effectiveType = $pageType ?? $originalSlug;
+        $effectiveType = $isSchemaPage ? null : ($pageType ?? $originalSlug);
         if ($effectiveType === 'home') {
             $this->saveHomepageSections($request, $page);
         } elseif ($effectiveType === 'platform') {
@@ -781,6 +796,66 @@ class PageController extends Controller
         }
 
         return redirect()->route('system-management.pages.index')->with('success', 'Page updated successfully.');
+    }
+
+    /**
+     * Build page_content for a page described by ContentSchema, storing uploaded files.
+     * Locales missing from the request keep their saved content.
+     */
+    private function buildSchemaContent(Request $request, Page $page): array
+    {
+        $input = $request->input('blocks', []);
+        $files = $request->file('block_files', []);
+        $content = $this->getPageContentByLocale($page);
+        $uploadDir = 'images/content/' . $page->slug;
+        $errors = [];
+
+        $upload = function (UploadedFile $file, string $type) use ($uploadDir, &$errors): string {
+            $allowed = $type === 'file' ? ContentSchema::FILE_EXTENSIONS : ContentSchema::IMAGE_EXTENSIONS;
+            $extension = strtolower($file->getClientOriginalExtension());
+            $maxKb = $type === 'file' ? 20480 : 10240;
+
+            if (!$file->isValid() || !in_array($extension, $allowed, true) || $file->getSize() > $maxKb * 1024) {
+                $errors[] = sprintf('"%s" was not uploaded: use %s up to %d MB.',
+                    $file->getClientOriginalName(), strtoupper(implode(', ', $allowed)), $maxKb / 1024);
+
+                return '';
+            }
+
+            $directory = public_path($uploadDir);
+            if (!is_dir($directory)) {
+                mkdir($directory, 0755, true);
+            }
+            $name = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . uniqid() . '.' . $extension;
+            // Copy instead of move(): move() refuses folders that Windows/OneDrive flag read-only
+            // even though they are writable.
+            if (!@copy($file->getRealPath(), $directory . '/' . $name)) {
+                $errors[] = sprintf('"%s" could not be saved on the server.', $file->getClientOriginalName());
+
+                return '';
+            }
+
+            return $uploadDir . '/' . $name;
+        };
+
+        foreach (PageLocales::all() as $locale) {
+            if (!isset($input[$locale]) && !isset($files[$locale])) {
+                continue;
+            }
+            $content[$locale] = ContentSchema::sanitize(
+                $page->slug,
+                $locale,
+                is_array($input[$locale] ?? null) ? $input[$locale] : [],
+                is_array($files[$locale] ?? null) ? $files[$locale] : [],
+                $upload
+            );
+        }
+
+        if ($errors) {
+            throw ValidationException::withMessages(['blocks' => $errors]);
+        }
+
+        return $content;
     }
 
     private function saveHomepageSections(Request $request, Page $page): void

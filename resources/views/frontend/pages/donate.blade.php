@@ -1,113 +1,76 @@
 @extends('frontend.layouts.app')
 
+@php
+    use App\Support\PageContent;
+
+    $amounts = $c->list('amounts');
+    $defaultAmount = (string) (old('amount') ?: (float) $c->get('default_amount'));
+    $presetAmounts = array_map(fn ($a) => (string) (float) $a['amount'], $amounts);
+    $isPreset = in_array($defaultAmount, $presetAmounts, true);
+@endphp
+
 @section('content')
-    @php
-        $c = $page->getPageContentForLocale();
+@include('frontend.partials.banner', ['bannerImage' => $c->get('banner_image'), 'bannerTitle' => $c->get('banner_title')])
 
-        $impactTitle = $c['impact_title'] ?? 'Where your support goes';
-        $impactSubtitle = $c['impact_subtitle'] ?? 'We are committed to transparency and accountable stewardship';
+@if (count($causes = $c->list('causes')))
+<section class="sec">
+  <div class="wrap">
+    <div class="head center"><h2>{{ $c->get('causes_title') }}</h2></div>
+    @include('frontend.partials.tiles', ['tiles' => $causes, 'cols' => 3])
+  </div>
+</section>
+@endif
 
-        $ctaTitle = $c['cta_title'] ?? 'Ready to make an impact?';
-        $ctaDescription = $c['cta_description'] ?? 'Your support helps us reach more families with food, education, health care, and emergency relief. Partner with us today.';
-        $donateButton = $c['donate_button'] ?? 'Donate Now';
-    @endphp
+<section class="sec alt">
+  <div class="wrap split" style="align-items:start">
+    <div>
+      <h2>{{ $c->get('intro_title') }}</h2>
+      <p class="lead">{{ $c->html('intro_text') }}</p>
+      @if (count($impact = $c->list('impact')))
+      <ul class="impact mt">
+        @foreach ($impact as $item)
+        <li><strong>{{ PageContent::money($item['amount']) }}</strong><span>{{ $item['text'] }}</span></li>
+        @endforeach
+      </ul>
+      @endif
+      @if ($c->get('show_campaign'))
+      <div class="mt">@include('frontend.partials.campaign')</div>
+      @endif
+      @if ($c->has('quote'))
+      <p class="quote mt">{{ $c->get('quote') }}</p>
+      @endif
+    </div>
 
-
-    <section class="bg-slate-50">
-        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
-            <div class="max-w-3xl">
-                <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">{{ $impactSubtitle }}</p>
-                <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                    {{ $impactTitle }}
-                </h2>
-            </div>
-
-            <div class="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                @php
-                    $impactAreas = $c['impact_areas'] ?? [
-                        [
-                            'icon' => '🍚',
-                            'title' => 'Meals & Essentials',
-                            'description' => 'Providing nutritious food, hygiene supplies, and basic necessities to families facing hardship.',
-                        ],
-                        [
-                            'icon' => '🎓',
-                            'title' => 'Education Support',
-                            'description' => 'Funding school supplies, scholarships, and learning resources for children and youth.',
-                        ],
-                        [
-                            'icon' => '🏥',
-                            'title' => 'Health Outreach',
-                            'description' => 'Supporting basic health checks, wellness education, and access to care.',
-                        ],
-                        [
-                            'icon' => '🆘',
-                            'title' => 'Emergency Relief',
-                            'description' => 'Rapid response to floods, displacement, and urgent community crises.',
-                        ],
-                        [
-                            'icon' => '🤝',
-                            'title' => 'Volunteer Care',
-                            'description' => 'Equipping local volunteers with resources and training to serve effectively.',
-                        ],
-                        [
-                            'icon' => '📊',
-                            'title' => 'Transparent Reporting',
-                            'description' => 'Clear updates so donors see exactly how their support makes a difference.',
-                        ],
-                    ];
-                @endphp
-
-                @foreach ($impactAreas as $area)
-                    <article class="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg shadow-teal-900/5">
-                        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50 text-4xl">
-                            {{ $area['icon'] }}
-                        </div>
-                        <h3 class="mt-5 text-xl font-bold text-slate-900">{{ $area['title'] }}</h3>
-                        <p class="mt-3 text-sm leading-6 text-slate-600">
-                            {{ $area['description'] }}
-                        </p>
-                    </article>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    <section class="bg-white">
-        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div class="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-teal-50 to-emerald-50 p-8 md:p-12 shadow-xl shadow-teal-900/5">
-                <div class="max-w-3xl">
-                    <p class="text-xs font-semibold uppercase tracking-[0.35em] text-teal-700">Why give</p>
-                    <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                        Your support reaches communities directly
-                    </h2>
-                    <p class="mt-6 text-base leading-7 text-slate-600">
-                        We keep overhead low and focus on practical, community-led programs. Every dollar you give goes toward real needs—food, school supplies, health outreach, and emergency relief—with transparent reporting so you can see the impact.
-                    </p>
-
-                    <div class="mt-10 grid gap-6 sm:grid-cols-3">
-                        @php
-                            $trustStats = $c['trust_stats'] ?? [
-                                ['value' => '95%+', 'label' => 'Funds go to programs'],
-                                ['value' => '36+', 'label' => 'Years trusted'],
-                                ['value' => 'Local', 'label' => 'Community-led'],
-                            ];
-                        @endphp
-                        @foreach ($trustStats as $stat)
-                            <div class="rounded-2xl bg-white p-5 text-center shadow-sm border border-slate-100">
-                                <div class="text-3xl font-extrabold text-teal-700">{{ $stat['value'] }}</div>
-                                <div class="mt-1 text-sm text-slate-600">{{ $stat['label'] }}</div>
-                            </div>
-                        @endforeach
-                    </div>
-
-                    <div class="mt-8">
-                        <p class="text-sm text-slate-600">
-                            <strong>Ways to give:</strong> Bank transfer, credit/debit card, or in-kind donations. All contributions are tax-deductible where applicable.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <form class="card form" id="donate-form" action="{{ route('frontend.form.submit', 'donate') }}" method="post"
+      data-ajax data-notice="donate-notice" data-validate="bkDonateValid" data-default="{{ $defaultAmount }}"
+      data-error="{{ $site->get('form_error') }}" data-no-amount="{{ $c->get('no_amount_message') }}">
+      @include('frontend.partials.form-hidden', ['form' => 'donate'])
+      <h3>{{ $c->get('form_title') }}</h3>
+      @if ($c->has('form_text'))
+      <p style="color:var(--muted);font-size:16px;margin-top:-8px">{{ $c->get('form_text') }}</p>
+      @endif
+      @if (count($amounts))
+      <div><label>{{ $c->get('label_amount') }}</label>
+        <div class="amounts">
+          @foreach ($amounts as $item)
+          @php $value = (string) (float) $item['amount']; @endphp
+          <button type="button" class="{{ $value === $defaultAmount ? 'active' : '' }}" data-amount="{{ $value }}">{{ PageContent::money($item['amount']) }}</button>
+          @endforeach
+        </div></div>
+      @endif
+      <div><label for="custom-amount">{{ $c->get('label_custom') }}</label><input id="custom-amount" type="number" min="1" step="1" placeholder="e.g. 30" value="{{ $isPreset ? '' : $defaultAmount }}"></div>
+      <input type="hidden" name="amount" id="amount-field" value="{{ $defaultAmount }}">
+      <div class="row"><div><label for="dn">{{ $c->get('label_name') }}</label><input id="dn" name="name" value="{{ old('name') }}" required maxlength="255"></div><div><label for="de">{{ $c->get('label_email') }}</label><input id="de" name="email" type="email" value="{{ old('email') }}" required maxlength="255"></div></div>
+      <div><label for="dp">{{ $c->get('label_phone') }}</label><input id="dp" name="phone" type="tel" value="{{ old('phone') }}" maxlength="50"></div>
+      <div><label for="dm">{{ $c->get('label_message') }}</label><textarea id="dm" name="message" maxlength="5000" placeholder="{{ $c->get('message_placeholder') }}">{{ old('message') }}</textarea></div>
+      <div class="total"><span>{{ $c->get('total_label') }}</span><span id="total-amount">{{ PageContent::money($defaultAmount) }}</span></div>
+      <button class="btn btn-orange" type="submit" style="font-size:18px;padding:15px"><span class="heart">♥</span> {{ $c->get('submit_label') }}</button>
+      @include('frontend.partials.form-notice', ['form' => 'donate', 'id' => 'donate-notice'])
+      <div class="trust">
+        @if ($c->has('trust_1'))<span>@include('frontend.partials.icon', ['name' => 'mail']) {{ $c->get('trust_1') }}</span>@endif
+        @if ($c->has('trust_2'))<span>@include('frontend.partials.icon', ['name' => 'chart']) <a href="{{ $c->link('trust_2_url') }}" style="text-decoration:underline">{{ $c->get('trust_2') }}</a></span>@endif
+      </div>
+    </form>
+  </div>
+</section>
 @endsection

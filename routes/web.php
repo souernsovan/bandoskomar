@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SystemManagement\UsersController;
+use App\Http\Controllers\Frontend\FormController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController as FrontendPageController;
 use App\Http\Controllers\Frontend\SitemapController;
@@ -50,7 +51,14 @@ Route::get('/programs/details/{product:slug}', [FrontendPageController::class, '
     ->name('frontend.product.detail');
 Route::get('/about-us', fn () => app(FrontendPageController::class)->show('about-us'))->name('frontend.about-us');
 Route::get('/contact', fn () => app(FrontendPageController::class)->show('contact'))->name('frontend.contact');
-Route::post('/contact', [FrontendPageController::class, 'sendContactMessage'])->name('frontend.contact.send');
+Route::post('/contact', [FormController::class, 'submit'])
+    ->defaults('form', 'contact')
+    ->middleware('throttle:10,1')
+    ->name('frontend.contact.send');
+Route::post('/forms/{form}', [FormController::class, 'submit'])
+    ->whereIn('form', ['volunteer', 'job', 'donate'])
+    ->middleware('throttle:10,1')
+    ->name('frontend.form.submit');
 Route::get('/donate', fn () => app(FrontendPageController::class)->show('donate'))->name('frontend.donate');
 Route::get('/gallery', [FrontendPageController::class, 'gallery'])->name('frontend.gallery');
 Route::get('/image-gallery', function () {

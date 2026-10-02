@@ -1,138 +1,72 @@
 @php
     $currentSlug = $page->slug ?? null;
-    $headerPageCollection = collect($headerPages ?? []);
-
-    $menuPages = $headerPageCollection->filter(
-        fn ($menuPage) => $menuPage->getMenuGroup() !== 'hidden'
-    );
-    $mainPages = $menuPages->filter(fn ($menuPage) => $menuPage->getMenuGroup() === 'main')->values();
-    $resourceLinks = $menuPages->filter(fn ($menuPage) => $menuPage->getMenuGroup() === 'resources')->values();
-    $getInvolvedLinks = $menuPages->filter(fn ($menuPage) => $menuPage->getMenuGroup() === 'involved')->values();
-    $morePages = $menuPages->filter(fn ($menuPage) => $menuPage->getMenuGroup() === 'more')->values();
-
-    $isResources = $resourceLinks->contains(fn ($resource) => $currentSlug === $resource->slug);
-    $isInvolved = $getInvolvedLinks->contains(fn ($involved) => $currentSlug === $involved->slug);
-    $isMorePages = $morePages->contains(fn ($menuPage) => $currentSlug === $menuPage->slug);
-    $isContact = request()->routeIs('frontend.contact') || $currentSlug === 'contact';
-    $isDonate = request()->routeIs('frontend.donate') || $currentSlug === 'donate';
+    $allPages = collect($headerPages ?? []);
+    // Contact and Donate have fixed places in the menu, wherever they are grouped.
+    $menuPages = $allPages->reject(fn ($p) => in_array($p->slug, ['contact', 'donate', \App\Support\ContentSchema::SITE], true)
+        || $p->getMenuGroup() === 'hidden');
+    $group = fn (string $name) => $menuPages->filter(fn ($p) => $p->getMenuGroup() === $name)->values();
+    $mainPages = $group('main');
+    $dropdowns = [
+        ['label' => $site->get('resources_label'), 'pages' => $group('resources')],
+        ['label' => $site->get('involved_label'), 'pages' => $group('involved')],
+    ];
+    $morePages = $group('more');
+    $contactPage = $allPages->firstWhere('slug', 'contact');
+    $isActive = fn ($p) => $currentSlug === $p->slug;
+    $logo = $site->media('logo');
+    $languages = [
+        'en' => ['name' => 'English', 'flag' => 'gb'],
+        'km' => ['name' => 'ខ្មែរ', 'long' => 'ខ្មែរ (Khmer)', 'flag' => 'kh'],
+    ];
+    $currentLang = $languages[app()->getLocale()] ?? $languages['en'];
+    $flag = fn ($code) => 'https://flagcdn.com/w20/' . $code . '.png';
 @endphp
-
-<header class="fe-header">
-    <div class="fe-header-inner fe-max-width">
-        <a href="{{ route('frontend.home') }}" class="fe-header-logo" aria-label="{{ $siteName ?? config('app.name') }}">
-            <img src="{{ asset($siteIconPath ?? \App\Models\SiteSetting::siteIconPath()) }}" alt="{{ $siteName ?? config('app.name') }}" class="fe-header-logo-img">
-        </a>
-
-        <button type="button" class="fe-header-menu-toggle" id="feHeaderMenuToggle" aria-label="Toggle menu" aria-expanded="false">
-            <span class="fe-header-menu-icon">
-                <span></span>
-                <span></span>
-                <span></span>
-            </span>
-        </button>
-
-        <div class="fe-header-nav-overlay" id="feHeaderNavOverlay" aria-hidden="true"></div>
-
-        <nav class="fe-header-nav" id="feHeaderNav" aria-label="Primary navigation">
-            <button type="button" class="fe-header-nav-close" id="feHeaderNavClose" aria-label="Close menu">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-
-            @foreach ($mainPages as $menuPage)
-                <a href="{{ $menuPage->url }}" class="fe-header-nav-link {{ $currentSlug === $menuPage->slug ? 'is-active' : '' }}" data-fe-close-on-nav-click>
-                    {{ $menuPage->getTitleForLocale() }}
-                </a>
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="{{ route('frontend.home') }}"><img src="{{ $logo }}" alt="{{ $site->get('site_title') }}"></a>
+    <button class="burger" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
+    <nav class="drawer" id="drawer" aria-label="Main">
+      <div class="drawer-head">
+        <a class="logo" href="{{ route('frontend.home') }}"><img src="{{ $logo }}" alt="{{ $site->get('site_title') }}"></a>
+        <button class="drawer-close" aria-label="Close menu">✕</button>
+      </div>
+      <ul class="menu">
+        @foreach ($mainPages as $menuPage)
+        <li><a href="{{ $menuPage->url }}" class="{{ $isActive($menuPage) ? 'active' : '' }}">{{ $menuPage->getTitleForLocale() }}</a></li>
+        @endforeach
+        @foreach ($dropdowns as $dropdown)
+          @continue($dropdown['pages']->isEmpty())
+          <li class="has-sub"><button class="{{ $dropdown['pages']->contains($isActive) ? 'active' : '' }}"><span>{{ $dropdown['label'] }}</span> <span class="caret">▼</span></button><ul class="sub">
+            @foreach ($dropdown['pages'] as $menuPage)
+            <li><a href="{{ $menuPage->url }}" class="{{ $isActive($menuPage) ? 'active' : '' }}">{{ $menuPage->getTitleForLocale() }}</a></li>
             @endforeach
-
-            @if ($resourceLinks->isNotEmpty())
-            <div class="fe-header-dropdown {{ $isResources ? 'is-active' : '' }}" data-fe-header-dropdown>
-                <button
-                    type="button"
-                    class="fe-header-nav-link fe-header-nav-button {{ $isResources ? 'is-active' : '' }}"
-                    data-fe-header-dropdown-trigger
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                    aria-controls="feHeaderResourcesMenu"
-                >
-                    <span>Info &amp; Resources</span>
-                    <svg class="fe-header-nav-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m6 9 6 6 6-6"></path>
-                    </svg>
-                </button>
-                <div class="fe-header-dropdown-menu" id="feHeaderResourcesMenu" data-fe-header-dropdown-menu role="menu" aria-hidden="true">
-                    @foreach ($resourceLinks as $resource)
-                        <a href="{{ $resource->url }}" class="fe-header-dropdown-link {{ $currentSlug === $resource->slug ? 'is-active' : '' }}" role="menuitem" data-fe-close-on-nav-click>
-                            {{ $resource->getTitleForLocale() }}
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-
-            @if ($getInvolvedLinks->isNotEmpty())
-            <div class="fe-header-dropdown {{ $isInvolved ? 'is-active' : '' }}" data-fe-header-dropdown>
-                <button
-                    type="button"
-                    class="fe-header-nav-link fe-header-nav-button {{ $isInvolved ? 'is-active' : '' }}"
-                    data-fe-header-dropdown-trigger
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                    aria-controls="feHeaderInvolvedMenu"
-                >
-                    <span>Get Involved</span>
-                    <svg class="fe-header-nav-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m6 9 6 6 6-6"></path>
-                    </svg>
-                </button>
-                <div class="fe-header-dropdown-menu" id="feHeaderInvolvedMenu" data-fe-header-dropdown-menu role="menu" aria-hidden="true">
-                    @foreach ($getInvolvedLinks as $involved)
-                        <a href="{{ $involved->url }}" class="fe-header-dropdown-link {{ $currentSlug === $involved->slug ? 'is-active' : '' }}" role="menuitem" data-fe-close-on-nav-click>
-                            {{ $involved->getTitleForLocale() }}
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-
-            @if ($morePages->isNotEmpty())
-                <div class="fe-header-dropdown {{ $isMorePages ? 'is-active' : '' }}" data-fe-header-dropdown>
-                    <button
-                        type="button"
-                        class="fe-header-nav-link fe-header-nav-button {{ $isMorePages ? 'is-active' : '' }}"
-                        data-fe-header-dropdown-trigger
-                        aria-haspopup="true"
-                        aria-expanded="false"
-                        aria-controls="feHeaderMorePagesMenu"
-                    >
-                        <span>More Pages</span>
-                        <svg class="fe-header-nav-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="m6 9 6 6 6-6"></path>
-                        </svg>
-                    </button>
-                    <div class="fe-header-dropdown-menu" id="feHeaderMorePagesMenu" data-fe-header-dropdown-menu role="menu" aria-hidden="true">
-                        @foreach ($morePages as $menuPage)
-                            <a href="{{ $menuPage->url }}" class="fe-header-dropdown-link {{ $currentSlug === $menuPage->slug ? 'is-active' : '' }}" role="menuitem" data-fe-close-on-nav-click>
-                                {{ $menuPage->getTitleForLocale() }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-
-            <a href="{{ route('frontend.contact') }}" class="fe-header-nav-link {{ $isContact ? 'is-active' : '' }}" data-fe-close-on-nav-click>
-                Contact
-            </a>
-
-            <a href="{{ route('frontend.donate') }}" class="fe-header-donate-btn fe-header-donate-btn--mobile {{ $isDonate ? 'is-active' : '' }}" data-fe-close-on-nav-click>
-                Donate
-            </a>
-        </nav>
-
-        <a href="{{ route('frontend.donate') }}" class="fe-header-donate-btn fe-header-donate-btn--desktop {{ $isDonate ? 'is-active' : '' }}" data-fe-close-on-nav-click>
-            Donate
-        </a>
-    </div>
+          </ul></li>
+        @endforeach
+        @foreach ($morePages as $menuPage)
+        <li><a href="{{ $menuPage->url }}" class="{{ $isActive($menuPage) ? 'active' : '' }}">{{ $menuPage->getTitleForLocale() }}</a></li>
+        @endforeach
+        @if ($contactPage)
+        <li><a href="{{ route('frontend.contact') }}" class="{{ $isActive($contactPage) ? 'active' : '' }}">{{ $contactPage->getTitleForLocale() }}</a></li>
+        @endif
+        <li><a href="{{ route('frontend.donate') }}" class="nav-donate {{ $currentSlug === 'donate' ? 'active' : '' }}">{{ $site->get('donate_label') }}</a></li>
+        <li class="has-sub lang"><button class="lang-current"><img src="{{ $flag($currentLang['flag']) }}" alt=""> {{ $currentLang['name'] }} <span class="caret">▼</span></button>
+          <ul class="sub">
+            @foreach ($languages as $code => $lang)
+            <li><a href="{{ route('locale.switch', $code) }}" lang="{{ $code }}"><img src="{{ $flag($lang['flag']) }}" alt=""> {{ $lang['long'] ?? $lang['name'] }}</a></li>
+            @endforeach
+          </ul>
+        </li>
+      </ul>
+      <div class="drawer-foot">
+        <div class="seg" role="group" aria-label="Language">
+          @foreach ($languages as $code => $lang)
+          <a href="{{ route('locale.switch', $code) }}" lang="{{ $code }}" class="{{ app()->getLocale() === $code ? 'on' : '' }}"><img src="{{ $flag($lang['flag']) }}" alt=""> {{ $lang['name'] }}</a>
+          @endforeach
+        </div>
+        <a class="btn btn-orange" href="{{ route('frontend.donate') }}"><span class="heart">♥</span> {{ $site->get('donate_label') }}</a>
+        <p class="drawer-contact">{{ $site->get('email') }}<br>{{ $site->get('phone') }}</p>
+      </div>
+    </nav>
+  </div>
+  <div class="overlay"></div>
 </header>

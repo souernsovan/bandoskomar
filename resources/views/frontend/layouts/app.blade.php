@@ -1,91 +1,83 @@
+@php
+    use App\Support\PageContent;
+
+    $page = $page ?? null;
+    $currentLocale = app()->getLocale();
+    $siteTitle = $site->get('site_title');
+    $pageTitle = $page ? $page->getTitleForLocale() : null;
+    $metaTitle = ($page->meta_title ?? null) ?: ($pageTitle ? $pageTitle . ' | ' . $siteTitle : $siteTitle);
+    $metaDescription = ($page->meta_description ?? null) ?: $site->get('meta_description');
+    $canonical = ($page->canonical_url ?? null) ?: url()->current();
+    $ogTags = $page->og_tags ?? [];
+    $structuredData = $page->structured_data ?? null;
+    $isDonatePage = ($page->slug ?? null) === 'donate';
+    $assetVersion = fn (string $path) => asset($path) . '?v=' . (@filemtime(public_path($path)) ?: '1');
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', $currentLocale) }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    @php
-        $siteName = $siteName ?? \App\Models\SiteSetting::get('site_name', config('app.name'));
-        $page = $page ?? null;
-        $currentLocale = app()->getLocale();
-        $metaTitle = $page ? ($page->meta_title ?? $page->getTitleForLocale()) : null;
-        $metaDescription = $page?->meta_description ?? \App\Models\SiteSetting::get('site_description', '');
-        $canonical = $page?->canonical_url ?? url()->current();
-        $ogTags = $page?->og_tags ?? [];
-    @endphp
-
-    <title>{{ $metaTitle ? $metaTitle . ' - ' . $siteName : $siteName }}</title>
-    <meta name="description" content="{{ $metaDescription ?? '' }}">
-    <meta name="robots" content="index, follow">
-
-    <link rel="icon" href="{{ asset($siteIconPath ?? \App\Models\SiteSetting::siteIconPath()) }}" type="{{ $siteIconMimeType ?? \App\Models\SiteSetting::siteIconMimeType() }}">
-
-    {{-- Canonical URL --}}
-    <link rel="canonical" href="{{ $canonical }}">
-
-    {{-- Open Graph --}}
-    <meta property="og:site_name" content="{{ $siteName }}">
-    <meta property="og:locale" content="{{ str_replace('-', '_', $currentLocale) }}">
-    <meta property="og:title" content="{{ $ogTags['og_title'] ?? $metaTitle ?? $siteName }}">
-    <meta property="og:description" content="{{ $ogTags['og_description'] ?? $metaDescription ?? '' }}">
-    <meta property="og:url" content="{{ $canonical }}">
-    <meta property="og:type" content="{{ $ogTags['og_type'] ?? 'website' }}">
-    @if(!empty($ogTags['og_image']))
-    <meta property="og:image" content="{{ $ogTags['og_image'] }}">
-    @endif
-
-    {{-- Twitter Card --}}
-    <meta name="twitter:card" content="{{ !empty($ogTags['og_image']) ? 'summary_large_image' : 'summary' }}">
-    <meta name="twitter:title" content="{{ $ogTags['og_title'] ?? $metaTitle ?? $siteName }}">
-    <meta name="twitter:description" content="{{ $ogTags['og_description'] ?? $metaDescription ?? '' }}">
-    @if(!empty($ogTags['og_image']))
-    <meta name="twitter:image" content="{{ $ogTags['og_image'] }}">
-    @endif
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    {{-- Structured Data (JSON-LD) --}}
-    @if($page && $page->structured_data && is_array($page->structured_data ?? []) && count($page->structured_data))
-    <script type="application/ld+json">{!! json_encode($page->structured_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
-    @endif
-
-    @php
-        $viteReady = file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'));
-    @endphp
-    @if ($viteReady)
-        @vite(['resources/css/frontend/app.css', 'resources/js/app.js'])
-    @endif
-    @stack('head')
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<title>{{ $metaTitle }}</title>
+<meta name="description" content="{{ $metaDescription }}">
+<meta name="theme-color" content="#1E2A6B">
+<link rel="icon" href="{{ asset(\App\Models\SiteSetting::siteIconPath()) }}" type="{{ \App\Models\SiteSetting::siteIconMimeType() }}">
+<link rel="canonical" href="{{ $canonical }}">
+<meta property="og:site_name" content="{{ $siteTitle }}">
+<meta property="og:locale" content="{{ str_replace('-', '_', $currentLocale) }}">
+<meta property="og:title" content="{{ $ogTags['og_title'] ?? $metaTitle }}">
+<meta property="og:description" content="{{ $ogTags['og_description'] ?? $metaDescription }}">
+<meta property="og:url" content="{{ $canonical }}">
+<meta property="og:type" content="{{ $ogTags['og_type'] ?? 'website' }}">
+@if (!empty($ogTags['og_image']))
+<meta property="og:image" content="{{ $ogTags['og_image'] }}">
+@endif
+<meta name="twitter:card" content="{{ !empty($ogTags['og_image']) ? 'summary_large_image' : 'summary' }}">
+@if (is_array($structuredData) && count($structuredData))
+<script type="application/ld+json">{!! json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
+@endif
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ $assetVersion('assets/css/style.css') }}">
+@stack('head')
 </head>
-<body class="fe-body">
-    @include('frontend.partials.header')
-    <main class="fe-main">
-        @php
-            $showPageBanner = false;
-            $hidePageBanner = isset($hidePageBanner) ? (bool) $hidePageBanner : false;
+<body>
+<a class="skip" href="#main">Skip to content</a>
+@include('frontend.partials.header')
+<main id="main">
+@yield('content')
+</main>
+@include('frontend.partials.footer')
 
-            if (! $hidePageBanner && isset($page) && $page) {
-                if (property_exists($page, 'show_banner')) {
-                    $showPageBanner = (bool) $page->show_banner;
-                } elseif (method_exists($page, 'shouldShowBanner')) {
-                    $showPageBanner = (bool) $page->shouldShowBanner();
-                }
-            }
-        @endphp
+<a class="float-donate" href="{{ route('frontend.donate') }}" aria-label="{{ $site->get('donate_label') }}"><span class="heart">♥</span><span class="fd-label">{{ $site->get('donate_label') }}</span></a>
 
-        @if ($showPageBanner)
-            @include('frontend.partials.page-banner', ['page' => $page])
-        @endif
+@if ($site->get('popup_enabled') && !$isDonatePage)
+<div class="popup" role="dialog" aria-modal="true" aria-label="{{ $site->get('donate_label') }}" data-delay="{{ (float) $site->get('popup_delay') }}">
+  <div class="box">
+    <button class="x" aria-label="Close">✕</button>
+    @if ($site->has('popup_image'))
+    <img src="{{ $site->media('popup_image') }}" alt="" loading="lazy">
+    @endif
+    <div class="in">
+      <h3>{{ $site->get('popup_title') }}</h3>
+      <p>{{ $site->get('popup_text') }}</p>
+      @if (count($popupAmounts = $site->list('popup_amounts')))
+      <div class="row-btns">
+        @foreach ($popupAmounts as $item)
+        <a href="{{ route('frontend.donate', ['amount' => $item['amount']]) }}">{{ PageContent::money($item['amount']) }}</a>
+        @endforeach
+      </div>
+      @endif
+      <a class="btn btn-orange" href="{{ route('frontend.donate') }}" style="width:100%">{{ $site->get('donate_label') }}</a>
+      <button class="later">{{ $site->get('popup_later') }}</button>
+    </div>
+  </div>
+</div>
+@endif
 
-        @yield('content')
-
-        @if ($showPageBanner)
-            @include('frontend.partials.page-enrichments', ['page' => $page])
-        @endif
-    </main>
-    @include('frontend.partials.footer')
-    @stack('scripts')
+<script src="{{ $assetVersion('assets/js/main.js') }}"></script>
+@stack('scripts')
 </body>
 </html>

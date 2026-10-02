@@ -125,7 +125,7 @@ class Page extends Model
             'home', 'about-us', 'product', 'history' => 'main',
             'jobs-announcement', 'annual-report', 'strategic-plan', 'partner' => 'resources',
             'volunteer', 'image-gallery', 'video' => 'involved',
-            'image' => 'hidden',
+            'image', \App\Support\ContentSchema::SITE => 'hidden',
             'contact', 'donate' => 'hidden',
             default => 'more',
         };
@@ -137,27 +137,6 @@ class Page extends Model
     public function getMenuGroupLabel(): string
     {
         return self::MENU_GROUP_LABELS[$this->getMenuGroup()] ?? ucfirst($this->getMenuGroup());
-    }
-
-    /**
-     * Determine whether the shared frontend banner should be rendered.
-     */
-    public function shouldShowBanner(): bool
-    {
-        return in_array($this->slug, [
-            'about-us',
-            'product',
-            'history',
-            'contact',
-            'donate',
-            'partner',
-            'volunteer',
-            'image-gallery',
-            'video-stories',
-            'annual-report',
-            'strategic-plan',
-            'jobs-announcement',
-        ], true);
     }
 
     private function isPageContentLocaleKeyed(array $pc): bool
@@ -178,6 +157,10 @@ class Page extends Model
      */
     public function getPageType(): ?string
     {
+        if (\App\Support\ContentSchema::has($this->slug)) {
+            return $this->slug;
+        }
+
         $special = ['home', 'platform', 'about-us', 'product', 'contact', 'partner'];
         if (in_array($this->slug, $special, true)) {
             return $this->slug;

@@ -22,11 +22,12 @@
     <div class="form-card">
         @php
             $stagedUploadPageTypes = ['home', 'platform', 'about-us', 'product'];
-            $useStagedMultiUpload = in_array($pageType ?? $page->slug ?? '', $stagedUploadPageTypes, true);
+            $hasContentSchema = !empty($contentSchema);
+            $useStagedMultiUpload = !$hasContentSchema && in_array($pageType ?? $page->slug ?? '', $stagedUploadPageTypes, true);
         @endphp
         <form action="{{ route('system-management.pages.update', $page) }}" method="POST"
             @if ($useStagedMultiUpload) data-staged-upload-url="{{ route('system-management.pages.staged-media', $page, false) }}" @endif
-            @if (in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'contact', 'history', 'donate', 'partner', 'volunteer', 'image-gallery', 'video-stories', 'annual-report', 'strategic-plan', 'jobs-announcement'])) enctype="multipart/form-data" @endif>
+            @if ($hasContentSchema || in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'contact', 'history', 'donate', 'partner', 'volunteer', 'image-gallery', 'video-stories', 'annual-report', 'strategic-plan', 'jobs-announcement'])) enctype="multipart/form-data" @endif>
             @csrf
             @method('PUT')
 
@@ -69,7 +70,7 @@
                         @endforeach
                         <div class="form-group">
                             <label for="slug" class="form-label">Slug <span class="form-required">*</span></label>
-                            @php $slugLocked = in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'partner', 'contact']); @endphp
+                            @php $slugLocked = $hasContentSchema || in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'partner', 'contact']); @endphp
                             @if ($slugLocked)
                                 <input type="hidden" name="slug" value="{{ old('slug', $page->slug) }}">
                                 <input type="text" id="slug" value="{{ old('slug', $page->slug) }}"
@@ -164,11 +165,13 @@
                         </div>
                     </div>
 
+                    @unless ($hasContentSchema)
                     @include('admin.system-management.pages.partials.banner-section', [
                         'bannerTitle' => $bannerTitle ?? '',
                         'bannerDescription' => $bannerDescription ?? '',
                         'bannerBackgroundImage' => $bannerBackgroundImage ?? '',
                     ])
+                    @endunless
 
                     {{-- Open Graph (OG) Tags --}}
                     <div class="edit-page-section">
@@ -244,7 +247,12 @@
                     </div>
                 </div>
 
-                @if (!in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'partner', 'contact']))
+                @if ($hasContentSchema)
+                    @include('admin.system-management.pages.partials.schema-editor', [
+                        'schema' => $contentSchema,
+                        'pageContentByLocale' => $pageContentByLocale ?? [],
+                    ])
+                @elseif (!in_array($pageType ?? $page->slug ?? '', ['home', 'platform', 'about-us', 'product', 'partner', 'contact']))
                    
                 @elseif (($pageType ?? $page->slug) === 'home')
                     <div class="edit-page-section">

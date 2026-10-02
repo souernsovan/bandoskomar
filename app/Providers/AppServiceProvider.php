@@ -2,9 +2,10 @@
 
 namespace App\Providers;
 
-use App\Models\Category;
 use App\Models\Page;
 use App\Models\User;
+use App\Support\PageContent;
+use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -18,7 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // `php artisan serve` only passes listed variables to the PHP server, and the check is
+        // case-sensitive. PowerShell names it "SystemRoot"; without it Windows cannot open the
+        // port ("Failed to listen on 127.0.0.1:9000 (reason: ?)").
+        ServeCommand::$passthroughVariables[] = 'SystemRoot';
     }
 
     /**
@@ -44,15 +48,13 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Header, footer and shared blocks are edited in the hidden "site" page.
+        View::composer('frontend.*', function ($view) {
+            $view->with('site', PageContent::site());
+        });
+
         View::composer('frontend.layouts.app', function ($view) {
-            $view->with([
-                'headerPages' => Page::getForMenu(),
-                'productCategories' => Category::where('status', 'active')->orderBy('name')->get(),
-                'siteName' => \App\Models\SiteSetting::get('site_name', config('app.name')),
-                'siteLogoPath' => \App\Models\SiteSetting::siteLogoPath(),
-                'siteIconPath' => \App\Models\SiteSetting::siteIconPath(),
-                'siteIconMimeType' => \App\Models\SiteSetting::siteIconMimeType(),
-            ]);
+            $view->with('headerPages', Page::getForMenu());
         });
     }
 }

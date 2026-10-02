@@ -1,69 +1,71 @@
 @extends('frontend.layouts.app')
 
+@php use App\Support\PageContent; @endphp
+
 @section('content')
+@include('frontend.partials.banner', ['bannerImage' => $c->get('banner_image'), 'bannerTitle' => $c->get('banner_title')])
 
+@php
+    $jobs = $c->list('jobs');
+    $openJobs = array_filter($jobs, fn ($job) => $job['status'] !== 'closed');
+@endphp
 
-    <section id="openings" class="border-y border-slate-200 bg-slate-50">
-        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div class="text-center">
-                <p class="text-xs font-semibold uppercase tracking-[0.35em] text-orange-700">Current openings</p>
-                <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Available positions</h2>
-            </div>
-            <div class="mt-10">
-                @if(isset($page->content['jobs']) && is_array($page->content['jobs']) && count($page->content['jobs']))
-                    @foreach($page->content['jobs'] as $job)
-                        <article class="rounded-3xl border border-slate-200 bg-white p-6 mb-6 shadow-sm">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div>
-                                    <h3 class="text-xl font-semibold text-slate-900">{{ $job['title'] ?? 'Job Title' }}</h3>
-                                    <p class="mt-1 text-sm text-slate-600">{{ $job['location'] ?? 'Phnom Penh / Remote' }} • {{ $job['type'] ?? 'Full-time' }}</p>
-                                    <p class="mt-2 text-sm leading-6 text-slate-600">{{ $job['summary'] ?? 'Brief description of the role and responsibilities.' }}</p>
-                                </div>
-                                <div class="flex gap-3">
-                                    <a href="{{ $job['apply_link'] ?? '#' }}" class="rounded-full bg-orange-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-700">Apply Now</a>
-                                    <a href="#" class="rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:border-orange-300 hover:text-orange-700">Details</a>
-                                </div>
-                            </div>
-                        </article>
-                    @endforeach
-                @else
-                    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-slate-600 text-center">
-                        No positions are currently open. Please check back later or email careers@bandoskomar.org for general inquiries.
-                    </div>
-                @endif
-            </div>
+<section class="sec">
+  <div class="wrap">
+    <div class="head"><h2>{{ $c->get('intro_title') }}</h2><p class="lead">{{ $c->get('intro_text') }}</p></div>
+    @if (empty($jobs) && $c->has('no_jobs_text'))
+    <p class="notice show" style="background:var(--sky);color:var(--navy)">{{ $c->get('no_jobs_text') }}</p>
+    @endif
+    <div class="stack">
+      @foreach ($jobs as $job)
+      @php $closed = $job['status'] === 'closed'; @endphp
+      <div class="card job">
+        <div><span class="tag {{ $closed ? 'closed' : '' }}">{{ $closed ? $c->get('closed_label') : $c->get('open_label') }}</span><h3>{{ $job['title'] }}</h3>
+        <div class="meta">
+          @if ($job['location'] !== '')<span>@include('frontend.partials.icon', ['name' => 'pin']) {{ $job['location'] }}</span>@endif
+          @if ($job['type'] !== '')<span>@include('frontend.partials.icon', ['name' => 'clock']) {{ $job['type'] }}</span>@endif
+          @if ($job['deadline'] !== '')<span>@include('frontend.partials.icon', ['name' => 'calendar']) {{ $job['deadline'] }}</span>@endif
+        </div></div>
+        <div class="job-actions">
+          @if ($job['pdf'] !== '')
+          <a class="btn btn-line" href="{{ PageContent::url($job['pdf']) }}" target="_blank" rel="noopener">{{ $c->get('details_button') }}</a>
+          @endif
+          @if ($closed)
+          <span class="btn btn-line" aria-disabled="true">{{ $c->get('closed_label') }}</span>
+          @else
+          <a class="btn btn-orange" href="#apply" data-position="{{ $job['title'] }}" onclick="var s=document.getElementById('jpos');if(s){s.value=this.dataset.position;}">{{ $c->get('apply_button') }}</a>
+          @endif
         </div>
-    </section>
+      </div>
+      @endforeach
+    </div>
+  </div>
+</section>
 
-    <section class="bg-white">
-        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Why join us?</h2>
-                <p class="mt-4 text-base leading-7 text-slate-600">We offer a mission-driven environment focused on education, integrity, and community impact.</p>
-            </div>
-            <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-6 w-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <h3 class="mt-5 text-xl font-semibold text-slate-900">Mission-driven</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-600">Your work directly supports education programs for children and communities in need.</p>
-                </article>
-                <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-6 w-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                    </div>
-                    <h3 class="mt-5 text-xl font-semibold text-slate-900">Collaborative culture</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-600">Partnerships with communities, volunteers, and donors to create sustainable outcomes.</p>
-                </article>
-                <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-6 w-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3" /></svg>
-                    </div>
-                    <h3 class="mt-5 text-xl font-semibold text-slate-900">Growth & development</h3>
-                    <p class="mt-3 text-sm leading-6 text-slate-600">Ongoing training and professional development as we scale our impact.</p>
-                </article>
-            </div>
-        </div>
-    </section>
+@if (count($openJobs))
+<section class="sec alt" id="apply">
+  <div class="wrap split">
+    <div><h2>{{ $c->get('apply_title') }}</h2><p class="lead">{{ $c->get('apply_text') }}</p>
+      @if ($site->has('email'))
+      <ul class="info-list mt"><li><div class="icon">@include('frontend.partials.icon', ['name' => 'mail'])</div><div><strong>{{ $c->get('label_email') }}</strong><a href="mailto:{{ $site->get('email') }}">{{ $site->get('email') }}</a></div></li></ul>
+      @endif
+    </div>
+    <form class="card form" action="{{ route('frontend.form.submit', 'job') }}" method="post" enctype="multipart/form-data"
+      data-ajax data-notice="job-notice" data-error="{{ $site->get('form_error') }}">
+      @include('frontend.partials.form-hidden', ['form' => 'job'])
+      <div class="row"><div><label for="jn">{{ $c->get('label_name') }}</label><input id="jn" name="name" value="{{ old('name') }}" required maxlength="255"></div><div><label for="je">{{ $c->get('label_email') }}</label><input id="je" name="email" type="email" value="{{ old('email') }}" required maxlength="255"></div></div>
+      <div class="row"><div><label for="jp">{{ $c->get('label_phone') }}</label><input id="jp" name="phone" type="tel" value="{{ old('phone') }}" maxlength="50"></div>
+      <div><label for="jpos">{{ $c->get('label_position') }}</label><select id="jpos" name="position" required><option value="">{{ $c->get('position_placeholder') }}</option>
+        @foreach ($openJobs as $job)
+        <option @selected(old('position') === $job['title'])>{{ $job['title'] }}</option>
+        @endforeach
+      </select></div></div>
+      <div><label for="jcv">{{ $c->get('label_cv') }}</label><input id="jcv" name="cv" type="file" accept=".pdf,application/pdf"></div>
+      <div><label for="jm">{{ $c->get('label_letter') }}</label><textarea id="jm" name="message" maxlength="5000">{{ old('message') }}</textarea></div>
+      <button class="btn btn-orange" type="submit">{{ $c->get('submit_label') }}</button>
+      @include('frontend.partials.form-notice', ['form' => 'job', 'id' => 'job-notice'])
+    </form>
+  </div>
+</section>
+@endif
 @endsection

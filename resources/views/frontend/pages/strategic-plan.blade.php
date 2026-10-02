@@ -1,22 +1,46 @@
 @extends('frontend.layouts.app')
-@section('content')
 
-<section class="border-y border-slate-200 bg-slate-50">
-    <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 class="text-xl font-semibold text-slate-900">Goal 1: Access</h3>
-                <p class="mt-2 text-sm leading-6 text-slate-600">Expand reach into rural schools and underserved communities by 2028.</p>
-            </article>
-            <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 class="text-xl font-semibold text-slate-900">Goal 2: Quality</h3>
-                <p class="mt-2 text-sm leading-6 text-slate-600">Improve teacher training and learning materials to raise student outcomes.</p>
-            </article>
-            <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 class="text-xl font-semibold text-slate-900">Goal 3: Sustainability</h3>
-                <p class="mt-2 text-sm leading-6 text-slate-600">Build local capacity and community-led governance for long-term impact.</p>
-            </article>
-        </div>
+@section('content')
+@include('frontend.partials.banner', ['bannerImage' => $c->get('banner_image'), 'bannerTitle' => $c->get('banner_title')])
+
+<section class="sec">
+  <div class="wrap split wide-left">
+    <div>
+      <h2>{{ $c->get('intro_title') }}</h2>
+      @foreach ($c->paragraphs('intro_text') as $paragraph)
+      <p class="lead">{{ $paragraph }}</p>
+      @endforeach
+      @if ($c->has('plan_pdf'))
+      <a class="btn btn-navy mt" href="{{ $c->media('plan_pdf') }}" target="_blank" rel="noopener">{{ $c->get('download_label') }}</a>
+      @endif
     </div>
+    @if ($c->has('intro_image'))
+    <div class="photo wide"><img src="{{ $c->media('intro_image') }}" alt=""></div>
+    @endif
+  </div>
 </section>
+
+@include('frontend.partials.story', ['blocks' => $c->list('blocks'), 'alt' => true])
+
+@if (count($goals = $c->list('goals')))
+<section class="sec">
+  <div class="wrap">
+    <div class="head center"><h2>{{ $c->get('goals_title') }}</h2></div>
+    <div class="grid-{{ count($goals) === 4 ? 4 : 3 }}">
+      @include('frontend.partials.cards', ['cards' => $goals])
+    </div>
+  </div>
+</section>
+@endif
+
+@if (count($photos = $c->list('photos')))
+<section class="sec alt">
+  <div class="wrap">@include('frontend.partials.gallery-grid', ['images' => $photos])</div>
+</section>
+<div class="lightbox" role="dialog" aria-modal="true"><button class="close" aria-label="Close">✕</button><img alt=""></div>
+@endif
+
+@if ($c->get('show_give'))
+  @include('frontend.partials.give')
+@endif
 @endsection
