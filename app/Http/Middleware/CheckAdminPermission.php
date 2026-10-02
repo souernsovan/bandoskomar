@@ -61,6 +61,11 @@ class CheckAdminPermission
         'system-management.roles.update' => 'roles.edit',
         'system-management.audit-logs.index' => 'audit_logs.view',
         'system-management.audit-logs.show' => 'audit_logs.view',
+        'admin.submissions.index' => 'submissions.view',
+        'admin.submissions.show' => 'submissions.view',
+        'admin.submissions.attachment' => 'submissions.view',
+        'admin.submissions.update' => 'submissions.edit',
+        'admin.submissions.destroy' => 'submissions.delete',
     ];
 
     public function handle(Request $request, Closure $next): Response

@@ -11,9 +11,9 @@ class SiteSetting extends Model
 {
     use HasFactory, HasUuids;
 
-    public const DEFAULT_SITE_LOGO = 'images/logo/community-care-logo.svg';
+    public const DEFAULT_SITE_LOGO = 'images/logo/bandos-komar-logo.png';
 
-    public const DEFAULT_SITE_ICON = 'images/logo/community-care-icon.svg';
+    public const DEFAULT_SITE_ICON = 'images/logo/bandos-komar-icon.png';
 
     /** Uploaded branding files are stored under this public path prefix */
     public const BRANDING_UPLOAD_PREFIX = 'images/site/branding/';

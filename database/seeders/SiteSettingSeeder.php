@@ -13,12 +13,12 @@ class SiteSettingSeeder extends Seeder
             [
                 'key' => 'site_name',
                 'group' => 'global',
-                'value' => 'Laravel',
+                'value' => 'Bandos Komar',
             ],
             [
                 'key' => 'site_description',
                 'group' => 'global',
-                'value' => 'Community-led non-profit supporting education, health, and relief programs.',
+                'value' => 'Bandos Komar (BK) is a local NGO dedicated to improving education in Cambodia, especially in rural areas.',
             ],
             [
                 'key' => 'site_logo',

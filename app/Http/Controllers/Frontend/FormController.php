@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Mail\WebsiteFormMail;
+use App\Models\FormSubmission;
 use App\Support\PageContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 /**
- * Website forms (contact, volunteer, job application, donation), sent by email.
+ * Website forms (contact, volunteer, job application, donation): saved in the database
+ * (Admin → Submissions) and emailed to the team.
  */
 class FormController extends Controller
 {
@@ -90,6 +94,8 @@ class FormController extends Controller
         }
 
         $data = $validator->validated();
+        $submission = $this->store($request, $form, $data);
+
         $fields = [];
         foreach (self::LABELS as $key => $label) {
             if (isset($data[$key]) && $data[$key] !== '') {
@@ -100,24 +106,56 @@ class FormController extends Controller
         $recipient = collect([$site->get('form_email'), $site->get('email'), config('mail.from.address')])
             ->first(fn ($email) => filter_var(trim((string) $email), FILTER_VALIDATE_EMAIL));
 
+        // The submission is already saved, so a mail problem does not lose it.
         try {
-            if (!$recipient) {
-                throw new \RuntimeException('No email address is configured for website forms.');
+            if ($recipient) {
+                Mail::to(trim($recipient))->send(new WebsiteFormMail(
+                    subjectLine: $definition['subject'] . ' - ' . $site->get('site_title'),
+                    fields: $fields,
+                    replyToEmail: $data['email'],
+                    replyToName: $data['name'],
+                    attachmentPath: $submission->attachment_path ? Storage::disk('local')->path($submission->attachment_path) : null,
+                    attachmentName: $submission->attachment_name,
+                ));
+                $submission->update(['email_sent' => true]);
             }
-            Mail::to(trim($recipient))->send(new WebsiteFormMail(
-                subjectLine: $definition['subject'] . ' - ' . $site->get('site_title'),
-                fields: $fields,
-                replyToEmail: $data['email'],
-                replyToName: $data['name'],
-                attachment: $request->file('cv'),
-            ));
         } catch (\Throwable $e) {
             report($e);
-
-            return $this->respond($request, $form, false, (string) $site->get('form_error'));
         }
 
         return $this->respond($request, $form, true, $this->successMessage($form, $definition, $request));
+    }
+
+    private function store(Request $request, string $form, array $data): FormSubmission
+    {
+        $attachmentPath = null;
+        $attachmentName = null;
+        if ($file = $request->file('cv')) {
+            $attachmentName = $file->getClientOriginalName();
+            $attachmentPath = $file->storeAs(
+                'submissions/' . $form,
+                Str::slug(pathinfo($attachmentName, PATHINFO_FILENAME)) . '-' . Str::random(8) . '.pdf',
+                'local'
+            ) ?: null;
+        }
+
+        $columns = ['name', 'email', 'phone', 'subject', 'position', 'interest', 'amount', 'message', 'cv'];
+
+        return FormSubmission::create([
+            'type' => $form,
+            'status' => array_key_first(FormSubmission::statusesFor($form)),
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'subject' => $data['subject'] ?? $data['position'] ?? $data['interest'] ?? null,
+            'amount' => $form === 'donate' ? (float) $data['amount'] : null,
+            'message' => $data['message'] ?? null,
+            'details' => array_diff_key($data, array_flip($columns)) ?: null,
+            'attachment_path' => $attachmentPath,
+            'attachment_name' => $attachmentName,
+            'locale' => app()->getLocale(),
+            'ip_address' => $request->ip(),
+        ]);
     }
 
     private function successMessage(string $form, array $definition, Request $request): string

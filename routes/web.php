@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SystemManagement\RoleController;
 use App\Http\Controllers\Admin\SystemManagement\AuditLogController;
 use App\Http\Controllers\Admin\SystemManagement\PageController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SubmissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,6 +117,18 @@ Route::middleware(['web', Authenticate::class, 'check.admin.permission'])->prefi
 
     // Products
     Route::resource('products', ProductController::class)->names('admin.products');
+
+    // Website form submissions (job applications, contact messages, donations, volunteers)
+    Route::prefix('submissions/{type}')
+        ->whereIn('type', array_keys(\App\Models\FormSubmission::TYPES))
+        ->name('admin.submissions.')
+        ->group(function () {
+            Route::get('/', [SubmissionController::class, 'index'])->name('index');
+            Route::get('{submission}', [SubmissionController::class, 'show'])->name('show');
+            Route::get('{submission}/attachment', [SubmissionController::class, 'attachment'])->name('attachment');
+            Route::put('{submission}', [SubmissionController::class, 'update'])->name('update');
+            Route::delete('{submission}', [SubmissionController::class, 'destroy'])->name('destroy');
+        });
 
     // Audit Logs
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('system-management.audit-logs.index');

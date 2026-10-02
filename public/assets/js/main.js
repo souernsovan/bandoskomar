@@ -245,3 +245,26 @@ document.querySelectorAll('.read-more').forEach(b => b.addEventListener('click',
   const card = b.closest('.vol');
   b.textContent = card.classList.toggle('open') ? b.dataset.less : b.dataset.more;
 }));
+
+// ---------- Form popups (job application) ----------
+document.querySelectorAll('.modal').forEach(modal => {
+  const open = trigger => {
+    const position = trigger && trigger.dataset.position;
+    const select = modal.querySelector('select[name=position]');
+    if (position && select) select.value = position;
+    modal.classList.add('open');
+    document.body.classList.add('modal-lock');
+    const first = modal.querySelector('input:not([type=hidden]):not([tabindex="-1"]), select, textarea');
+    if (first) setTimeout(() => first.focus(), 50);
+  };
+  const close = () => {
+    modal.classList.remove('open');
+    document.body.classList.remove('modal-lock');
+    if (location.hash === '#' + modal.id) history.replaceState(null, '', location.pathname + location.search);
+  };
+  document.querySelectorAll(`[data-modal-open="${modal.id}"]`).forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); open(btn); }));
+  modal.querySelectorAll('[data-modal-close]').forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); close(); }));
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
+  if (modal.classList.contains('open') || location.hash === '#' + modal.id) open();
+});

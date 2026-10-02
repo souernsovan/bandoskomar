@@ -58,6 +58,8 @@ class PermissionBootstrapper
             'pages.view',
             'pages.edit',
             'audit_logs.view',
+            'submissions.view',
+            'submissions.edit',
         ];
 
         $staffMissingPermissions = array_values(array_diff(

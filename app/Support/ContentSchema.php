@@ -328,7 +328,7 @@ class ContentSchema
 
         return ['label' => 'Website: header, footer & shared blocks', 'sections' => [
             ['title' => 'Logo & header', 'fields' => [
-                'logo' => self::image('Logo', 'https://bongsrey.sgp1.digitaloceanspaces.com/library/616/images/thumbnail/5de487e245aad.png'),
+                'logo' => self::image('Logo', 'images/logo/bandos-komar-logo.png'),
                 'site_title' => self::text('Name shown in the browser tab', 'Bandos Komar Organization'),
                 'meta_description' => self::textarea('Default search engine description', 'Bandos Komar (BK) is a local NGO dedicated to improving education in Cambodia, especially in rural areas.'),
                 'home_label' => self::text('"Home" label in breadcrumbs', 'Home', ['default_km' => 'ទំព័រដើម']),
@@ -428,23 +428,6 @@ class ContentSchema
                     'Young people need practical life skills to find work and support their families.',
                 ])),
                 'problem_button' => self::text('Button label', 'Help a child stay in school'),
-            ]],
-            ['title' => 'What your donation does', 'fields' => [
-                'gifts_title' => self::text('Title', 'What your donation does'),
-                'gifts_text' => self::textarea('Text', 'Every dollar goes to education, life skills, and protection programs for children who need it most.'),
-                'gifts' => self::items('Gift cards', 'Gift', [
-                    'image' => self::image('Image'),
-                    'amount' => self::number('Amount (USD)'),
-                    'text' => self::textarea('Text'),
-                    'button' => self::text('Button label'),
-                    'featured' => self::checkbox('Highlight this card', false),
-                    'badge' => self::text('Badge (highlighted card only)'),
-                ], [
-                    ['image' => self::WP.'photo_2025-07-25_09-07-30.png', 'amount' => 10, 'text' => 'School supplies for one child—notebooks, pens, and a school bag.', 'button' => 'Give $10', 'featured' => false, 'badge' => ''],
-                    ['image' => self::WP.'komar.png', 'amount' => 25, 'text' => 'Seeds and tools for a school garden where children learn to grow food.', 'button' => 'Give $25', 'featured' => true, 'badge' => 'Most chosen'],
-                    ['image' => self::WP.'490504848_979551997646287_5088911998051210915_n.jpg', 'amount' => 50, 'text' => 'A life skills and career workshop for a whole class.', 'button' => 'Give $50', 'featured' => false, 'badge' => ''],
-                    ['image' => self::WP.'image-7.png', 'amount' => 100, 'text' => 'Learning materials for a rural pre-school classroom.', 'button' => 'Give $100', 'featured' => false, 'badge' => ''],
-                ]),
             ]],
             ['title' => 'About & campaign', 'fields' => [
                 'about_title' => self::text('Title', 'Bandos Komar Association'),

@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Mail\Attachment;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -25,7 +24,8 @@ class WebsiteFormMail extends Mailable
         public array $fields,
         public string $replyToEmail,
         public string $replyToName,
-        public ?UploadedFile $attachment = null,
+        public ?string $attachmentPath = null,
+        public ?string $attachmentName = null,
     ) {
     }
 
@@ -48,13 +48,13 @@ class WebsiteFormMail extends Mailable
 
     public function attachments(): array
     {
-        if (!$this->attachment) {
+        if (!$this->attachmentPath || !is_file($this->attachmentPath)) {
             return [];
         }
 
         return [
-            Attachment::fromPath($this->attachment->getRealPath())
-                ->as($this->attachment->getClientOriginalName())
+            Attachment::fromPath($this->attachmentPath)
+                ->as($this->attachmentName ?: basename($this->attachmentPath))
                 ->withMime('application/pdf'),
         ];
     }

@@ -33,4 +33,9 @@ return [
     'audit_logs' => [
         'audit_logs.view' => 'View',
     ],
+    'submissions' => [
+        'submissions.view' => 'View',
+        'submissions.edit' => 'Edit',
+        'submissions.delete' => 'Delete',
+    ],
 ];

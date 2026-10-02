@@ -25,7 +25,7 @@
         <div class="login-card">
             <!-- Logo -->
             <div class="login-logo">
-                <img src="{{ asset(\App\Models\SiteSetting::siteLogoPath()) }}" alt="{{ \App\Models\SiteSetting::get('site_name', config('app.name')) }}" style="width: 100px;">
+                <img src="{{ asset(\App\Models\SiteSetting::siteLogoPath()) }}" alt="{{ \App\Models\SiteSetting::get('site_name', config('app.name')) }}" style="width: 180px; max-width: 100%; height: auto;">
             </div>
 
             <!-- Login Form -->

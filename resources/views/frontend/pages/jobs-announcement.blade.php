@@ -1,14 +1,17 @@
 @extends('frontend.layouts.app')
 
-@php use App\Support\PageContent; @endphp
+@php
+    use App\Support\PageContent;
+
+    $jobs = $c->list('jobs');
+    $openJobs = array_filter($jobs, fn ($job) => $job['status'] !== 'closed');
+    // Re-open the form after a submit without JavaScript.
+    $status = session('form_status');
+    $reopen = (is_array($status) && ($status['form'] ?? null) === 'job') || old('_form') === 'job';
+@endphp
 
 @section('content')
 @include('frontend.partials.banner', ['bannerImage' => $c->get('banner_image'), 'bannerTitle' => $c->get('banner_title')])
-
-@php
-    $jobs = $c->list('jobs');
-    $openJobs = array_filter($jobs, fn ($job) => $job['status'] !== 'closed');
-@endphp
 
 <section class="sec">
   <div class="wrap">
@@ -33,7 +36,7 @@
           @if ($closed)
           <span class="btn btn-line" aria-disabled="true">{{ $c->get('closed_label') }}</span>
           @else
-          <a class="btn btn-orange" href="#apply" data-position="{{ $job['title'] }}" onclick="var s=document.getElementById('jpos');if(s){s.value=this.dataset.position;}">{{ $c->get('apply_button') }}</a>
+          <a class="btn btn-orange" href="#apply" data-modal-open="apply" data-position="{{ $job['title'] }}">{{ $c->get('apply_button') }}</a>
           @endif
         </div>
       </div>
@@ -43,29 +46,27 @@
 </section>
 
 @if (count($openJobs))
-<section class="sec alt" id="apply">
-  <div class="wrap split">
-    <div><h2>{{ $c->get('apply_title') }}</h2><p class="lead">{{ $c->get('apply_text') }}</p>
-      @if ($site->has('email'))
-      <ul class="info-list mt"><li><div class="icon">@include('frontend.partials.icon', ['name' => 'mail'])</div><div><strong>{{ $c->get('label_email') }}</strong><a href="mailto:{{ $site->get('email') }}">{{ $site->get('email') }}</a></div></li></ul>
-      @endif
-    </div>
-    <form class="card form" action="{{ route('frontend.form.submit', 'job') }}" method="post" enctype="multipart/form-data"
+<div class="modal {{ $reopen ? 'open' : '' }}" id="apply" role="dialog" aria-modal="true" aria-labelledby="apply-title">
+  <div class="modal-box">
+    <a href="#" class="modal-x" data-modal-close aria-label="Close">✕</a>
+    <h2 id="apply-title">{{ $c->get('apply_title') }}</h2>
+    <p class="lead">{{ $c->get('apply_text') }}</p>
+    <form class="form" action="{{ route('frontend.form.submit', 'job') }}" method="post" enctype="multipart/form-data"
       data-ajax data-notice="job-notice" data-error="{{ $site->get('form_error') }}">
       @include('frontend.partials.form-hidden', ['form' => 'job'])
-      <div class="row"><div><label for="jn">{{ $c->get('label_name') }}</label><input id="jn" name="name" value="{{ old('name') }}" required maxlength="255"></div><div><label for="je">{{ $c->get('label_email') }}</label><input id="je" name="email" type="email" value="{{ old('email') }}" required maxlength="255"></div></div>
-      <div class="row"><div><label for="jp">{{ $c->get('label_phone') }}</label><input id="jp" name="phone" type="tel" value="{{ old('phone') }}" maxlength="50"></div>
       <div><label for="jpos">{{ $c->get('label_position') }}</label><select id="jpos" name="position" required><option value="">{{ $c->get('position_placeholder') }}</option>
         @foreach ($openJobs as $job)
         <option @selected(old('position') === $job['title'])>{{ $job['title'] }}</option>
         @endforeach
-      </select></div></div>
-      <div><label for="jcv">{{ $c->get('label_cv') }}</label><input id="jcv" name="cv" type="file" accept=".pdf,application/pdf"></div>
+      </select></div>
+      <div class="row"><div><label for="jn">{{ $c->get('label_name') }}</label><input id="jn" name="name" value="{{ old('name') }}" required maxlength="255"></div><div><label for="je">{{ $c->get('label_email') }}</label><input id="je" name="email" type="email" value="{{ old('email') }}" required maxlength="255"></div></div>
+      <div class="row"><div><label for="jp">{{ $c->get('label_phone') }}</label><input id="jp" name="phone" type="tel" value="{{ old('phone') }}" maxlength="50"></div>
+      <div><label for="jcv">{{ $c->get('label_cv') }}</label><input id="jcv" name="cv" type="file" accept=".pdf,application/pdf"></div></div>
       <div><label for="jm">{{ $c->get('label_letter') }}</label><textarea id="jm" name="message" maxlength="5000">{{ old('message') }}</textarea></div>
       <button class="btn btn-orange" type="submit">{{ $c->get('submit_label') }}</button>
       @include('frontend.partials.form-notice', ['form' => 'job', 'id' => 'job-notice'])
     </form>
   </div>
-</section>
+</div>
 @endif
 @endsection

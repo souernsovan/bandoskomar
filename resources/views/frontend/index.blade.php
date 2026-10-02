@@ -53,31 +53,6 @@
   </div>
 </section>
 
-@if (count($gifts = $c->list('gifts')))
-<section class="sec">
-  <div class="wrap">
-    <div class="head center">
-      <h2>{{ $c->get('gifts_title') }}</h2>
-      <p class="lead">{{ $c->get('gifts_text') }}</p>
-    </div>
-    <div class="grid-4">
-      @foreach ($gifts as $gift)
-      @php $featured = filter_var($gift['featured'], FILTER_VALIDATE_BOOLEAN); @endphp
-      <div class="gift {{ $featured ? 'featured' : '' }}">
-        @if ($gift['image'] !== '')<img src="{{ PageContent::url($gift['image']) }}" alt="" loading="lazy">@endif
-        <div class="body">
-          @if ($featured && $gift['badge'] !== '')<span class="badge">{{ $gift['badge'] }}</span>@endif
-          <span class="amt">{{ PageContent::money($gift['amount']) }}</span>
-          <p>{{ $gift['text'] }}</p>
-          <a class="btn {{ $featured ? 'btn-orange' : 'btn-line' }}" href="{{ route('frontend.donate', ['amount' => $gift['amount']]) }}">{{ $gift['button'] }}</a>
-        </div>
-      </div>
-      @endforeach
-    </div>
-  </div>
-</section>
-@endif
-
 <section class="sec alt">
   <div class="wrap {{ $c->get('show_campaign') ? 'split wide-left' : '' }}">
     <div>
